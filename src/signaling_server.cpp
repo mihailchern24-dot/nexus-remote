@@ -1,3 +1,4 @@
+#include <cstring>
 #include "../include/socket_utils.h"
 #include "../include/websocket_utils.h"
 
@@ -247,3 +248,4 @@ int main(int argc, char** argv) {
     sockets_cleanup();
     return 0;
 }
+
