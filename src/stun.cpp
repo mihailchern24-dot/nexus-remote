@@ -1,8 +1,14 @@
 #include "../include/stun.h"
-#include "../include/socket_utils.h"`n#include <arpa/inet.h>`n#include <unistd.h>
+#include "../include/socket_utils.h"
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <cstring>
 #include <random>
 #include <vector>
+#include <iostream>
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#endif
 #include <iostream>
 #ifdef _WIN32
 #include <ws2tcpip.h>
