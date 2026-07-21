@@ -1,3 +1,4 @@
+#include <cstring>
 #include "../include/base64.h"
 
 static const char* BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -53,3 +54,4 @@ std::vector<unsigned char> base64_decode(const std::string &input) {
     }
     return out;
 }
+
