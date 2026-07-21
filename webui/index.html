@@ -1,0 +1,285 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Remote</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+.header { text-align: center; padding: 50px 0 30px; }
+.header h1 { font-size: 36px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+.header p { color: #666; font-size: 14px; }
+.card { background: #1a1a2e; border-radius: 16px; padding: 24px; margin: 16px 0; border: 1px solid #2a2a4a; }
+.card h2 { font-size: 18px; margin-bottom: 16px; color: #a29bfe; }
+.btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.btn-primary { background: #6c5ce7; color: #fff; }
+.btn-primary:hover { background: #5a4bd1; transform: translateY(-1px); }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn-success { background: #2ecc71; color: #fff; }
+.btn-success:hover { background: #27ae60; }
+.btn-outline { background: transparent; border: 1px solid #6c5ce7; color: #6c5ce7; }
+.input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid #2a2a4a; background: #0f0f1a; color: #fff; font-size: 14px; margin: 8px 0; transition: border-color 0.3s; }
+.input:focus { outline: none; border-color: #6c5ce7; }
+select.input { cursor: pointer; }
+.status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+.status-dot.online { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+.status-dot.offline { background: #e74c3c; }
+.status-dot.capturing { background: #f39c12; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.device-list { display: flex; flex-direction: column; gap: 10px; }
+.device-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #16213e; border-radius: 12px; transition: background 0.3s; }
+.device-item:hover { background: #1a2744; }
+.device-info h3 { font-size: 15px; margin-bottom: 2px; }
+.device-info p { font-size: 12px; color: #777; }
+.device-actions { display: flex; gap: 8px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 24px; background: #1a1a2e; padding: 6px; border-radius: 12px; }
+.tab { padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #888; transition: all 0.3s; }
+.tab:hover { color: #fff; }
+.tab.active { background: #6c5ce7; color: #fff; }
+.hidden { display: none !important; }
+.flex-row { display: flex; gap: 12px; align-items: center; }
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-success { background: rgba(46,204,113,0.2); color: #2ecc71; }
+.badge-warning { background: rgba(243,156,18,0.2); color: #f39c12; }
+.progress-bar { height: 4px; background: #2a2a4a; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.progress-fill { height: 100%; background: #6c5ce7; border-radius: 2px; transition: width 0.5s; }
+.alert { padding: 12px 16px; border-radius: 10px; margin: 12px 0; font-size: 13px; }
+.alert-info { background: rgba(108,92,231,0.15); color: #a29bfe; border: 1px solid rgba(108,92,231,0.3); }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚡ Nexus Remote</h1>
+        <p>Remote Desktop · Game Streaming · File Sharing</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('devices')">📱 Devices</div>
+        <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+        <div class="tab" onclick="switchTab('files')">📁 Files</div>
+        <div class="tab" onclick="switchTab('account')">👤 Account</div>
+    </div>
+
+    <!-- Devices Tab -->
+    <div id="tab-devices">
+        <div class="card">
+            <div class="flex-row" style="justify-content:space-between">
+                <h2>My Devices</h2>
+                <span class="badge badge-success" id="deviceCount">0 online</span>
+            </div>
+            <div class="device-list" id="deviceList">
+                <div class="device-item">
+                    <div class="device-info">
+                        <h3><span class="status-dot offline"></span> No devices yet</h3>
+                        <p>Share your Device ID with friends to connect</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Connect to Device</h2>
+            <div class="flex-row">
+                <input type="text" class="input" id="deviceId" placeholder="Device ID or IP address" style="flex:1">
+                <input type="password" class="input" id="devicePassword" placeholder="Password" style="width:150px">
+            </div>
+            <div class="flex-row" style="margin-top:8px;gap:8px">
+                <button class="btn btn-primary" onclick="connectToDevice()">🔗 Connect</button>
+                <button class="btn btn-outline" onclick="scanQR()">📷 Scan QR</button>
+                <button class="btn btn-outline" onclick="shareLink()">🔗 Copy Link</button>
+            </div>
+            <div class="alert alert-info hidden" id="connectStatus"></div>
+        </div>
+
+        <div class="card" style="text-align:center">
+            <div class="flex-row" style="justify-content:center;gap:16px">
+                <button class="btn btn-success" id="startBtn" onclick="startCapture()" style="min-width:180px">
+                    ▶ Start Capture
+                </button>
+                <button class="btn btn-danger hidden" id="stopBtn" onclick="stopCapture()" style="min-width:180px">
+                    ⏹ Stop Capture
+                </button>
+            </div>
+            <p style="color:#666;margin-top:12px;font-size:13px" id="statusText">
+                <span class="status-dot offline"></span> Ready
+            </p>
+        </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="hidden">
+        <div class="card">
+            <h2>Capture Settings</h2>
+            <label style="color:#777;font-size:13px">Resolution</label>
+            <select class="input" id="resolution">
+                <option value="auto">Auto (detect)</option>
+                <option value="1920x1080">1920×1080 (Full HD)</option>
+                <option value="1280x720">1280×720 (HD)</option>
+                <option value="2560x1440">2560×1440 (2K)</option>
+                <option value="3840x2160">3840×2160 (4K)</option>
+            </select>
+            <label style="color:#777;font-size:13px">FPS</label>
+            <select class="input" id="fps">
+                <option value="30">30 FPS</option>
+                <option value="60">60 FPS</option>
+                <option value="120">120 FPS</option>
+            </select>
+            <label style="color:#777;font-size:13px">Codec</label>
+            <select class="input" id="codec">
+                <option value="auto">Auto (recommended)</option>
+                <option value="h264">H.264</option>
+                <option value="h265">H.265 (HEVC)</option>
+                <option value="av1">AV1</option>
+            </select>
+            <label style="color:#777;font-size:13px">Bitrate (Mbps)</label>
+            <input type="range" class="input" id="bitrate" min="1" max="50" value="5" oninput="document.getElementById('bitrateVal').textContent=this.value+' Mbps'">
+            <p style="color:#6c5ce7;font-size:13px" id="bitrateVal">5 Mbps</p>
+            <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:12px">💾 Save Settings</button>
+        </div>
+
+        <div class="card">
+            <h2>Gamepad</h2>
+            <div class="flex-row" style="justify-content:space-between">
+                <span style="color:#ccc">Virtual Gamepad</span>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                    <input type="checkbox" id="gamepadEnabled" checked onchange="toggleGamepad()">
+                    <span id="gamepadLabel">Enabled</span>
+                </label>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;margin-top:12px">
+                <span style="color:#ccc">Auto-hide with physical controller</span>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                    <input type="checkbox" id="autoHideGamepad" checked>
+                    <span>On</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Files Tab -->
+    <div id="tab-files" class="hidden">
+        <div class="card">
+            <h2>Cloud Storage</h2>
+            <div class="device-list">
+                <div class="device-item">
+                    <div class="device-info">
+                        <h3>📂 Google Drive</h3>
+                        <p>Not connected</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="connectDrive('google')">Connect</button>
+                </div>
+                <div class="device-item">
+                    <div class="device-info">
+                        <h3>📂 Yandex Disk</h3>
+                        <p>Not connected</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="connectDrive('yandex')">Connect</button>
+                </div>
+                <div class="device-item">
+                    <div class="device-info">
+                        <h3>📂 OneDrive</h3>
+                        <p>Not connected</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="connectDrive('onedrive')">Connect</button>
+                </div>
+                <div class="device-item">
+                    <div class="device-info">
+                        <h3>📂 Dropbox</h3>
+                        <p>Not connected</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="connectDrive('dropbox')">Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Recent Transfers</h2>
+            <p style="color:#666">No files transferred yet</p>
+            <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+    </div>
+
+    <!-- Account Tab -->
+    <div id="tab-account" class="hidden">
+        <div class="card">
+            <h2>Login</h2>
+            <button class="btn btn-primary" onclick="loginGoogle()" style="width:100%;margin:4px 0">🔵 Sign in with Google</button>
+            <button class="btn btn-outline" onclick="loginGitHub()" style="width:100%;margin:4px 0">🐙 Sign in with GitHub</button>
+            <div style="text-align:center;color:#666;margin:16px 0">— or —</div>
+            <input type="text" class="input" id="username" placeholder="Username">
+            <input type="password" class="input" id="password" placeholder="Password">
+            <button class="btn btn-primary" onclick="login()" style="width:100%">Sign In</button>
+        </div>
+
+        <div class="card">
+            <h2>This Device</h2>
+            <p style="color:#777;font-size:13px">Device ID</p>
+            <div class="flex-row">
+                <input type="text" class="input" id="thisDeviceId" value="Loading..." readonly style="flex:1">
+                <button class="btn btn-outline" onclick="copyDeviceId()">📋 Copy</button>
+            </div>
+            <p style="color:#777;font-size:13px;margin-top:8px">Access Password</p>
+            <div class="flex-row">
+                <input type="text" class="input" id="thisDevicePassword" value="••••••" readonly style="flex:1">
+                <button class="btn btn-outline" onclick="generateNewPassword()">🔄 New</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+}
+
+async function startCapture() {
+    await fetch('/api/start');
+    document.getElementById('startBtn').classList.add('hidden');
+    document.getElementById('stopBtn').classList.remove('hidden');
+    document.getElementById('statusText').innerHTML = '<span class="status-dot capturing"></span> Capturing...';
+}
+
+async function stopCapture() {
+    await fetch('/api/stop');
+    document.getElementById('startBtn').classList.remove('hidden');
+    document.getElementById('stopBtn').classList.add('hidden');
+    document.getElementById('statusText').innerHTML = '<span class="status-dot offline"></span> Stopped';
+}
+
+function toggleGamepad() {
+    fetch('/api/gamepad');
+    const lbl = document.getElementById('gamepadLabel');
+    const cb = document.getElementById('gamepadEnabled');
+    lbl.textContent = cb.checked ? 'Enabled' : 'Disabled';
+}
+
+function connectToDevice() {
+    const id = document.getElementById('deviceId').value;
+    const pass = document.getElementById('devicePassword').value;
+    const status = document.getElementById('connectStatus');
+    status.classList.remove('hidden');
+    status.textContent = 'Connecting to ' + id + '...';
+}
+
+function saveSettings() {
+    document.getElementById('statusText').innerHTML = '<span class="status-dot online"></span> Settings saved!';
+}
+
+function loginGoogle() { alert('Google OAuth coming soon'); }
+function loginGitHub() { alert('GitHub OAuth coming soon'); }
+function login() { alert('Logged in!'); }
+function connectDrive(name) { alert('Connecting to ' + name + '...'); }
+function scanQR() { alert('QR scanner coming soon'); }
+function shareLink() { alert('Share link copied!'); }
+function copyDeviceId() { navigator.clipboard.writeText(document.getElementById('thisDeviceId').value); }
+function generateNewPassword() { document.getElementById('thisDevicePassword').value = Math.random().toString(36).slice(2,10); }
+</script>
+</body>
+</html>
