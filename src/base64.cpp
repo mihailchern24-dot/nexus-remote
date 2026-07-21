@@ -44,7 +44,7 @@ std::vector<unsigned char> base64_decode(const std::string &input) {
     for (unsigned char c : input) {
         if (std::isspace(c) || c == '=') break;
         if (!is_base64(c)) continue;
-        val = (val << 6) + (std::strchr(BASE64_CHARS, c) - BASE64_CHARS);
+        val = (val << 6) + (strchr(BASE64_CHARS, c) - BASE64_CHARS);
         valb += 6;
         if (valb >= 0) {
             out.push_back((unsigned char)((val >> valb) & 0xFF));
