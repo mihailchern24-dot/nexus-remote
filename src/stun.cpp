@@ -1,5 +1,5 @@
 #include "../include/stun.h"
-#include "../include/socket_utils.h"
+#include "../include/socket_utils.h"`n#include <arpa/inet.h>`n#include <unistd.h>
 #include <cstring>
 #include <random>
 #include <vector>
@@ -55,7 +55,7 @@ std::pair<std::string, uint16_t> stun_get_public_endpoint(const std::string &ser
 
     uint8_t response[576];
     struct sockaddr_in from{};
-    int fromlen = sizeof(from);
+    socklen_t fromlen = sizeof(from);
     int n = recvfrom(s, (char*)response, sizeof(response), 0, (struct sockaddr*)&from, &fromlen);
     if (n <= 0) {
         close_socket(s);
