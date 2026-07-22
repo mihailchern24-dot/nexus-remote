@@ -6,31 +6,27 @@ import os
 from enum import Enum
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes, hmac, padding
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 
 class EncryptionMethod(Enum):
     NONE = "none"
-    AES_GCM = "aes_gcm"         # AES-256-GCM (рекомендуется)
-    AES_CBC = "aes_cbc"         # AES-256-CBC + HMAC
-    CHACHA20 = "chacha20"       # ChaCha20-Poly1305
-    AES_CTR = "aes_ctr"         # AES-256-CTR + HMAC
-    XOR = "xor"                 # ростое XOR (для слабых устройств)
-    RSA_AES = "rsa_aes"         # RSA + AES (асимметричное)
+    AES_GCM = "aes_gcm"
+    AES_CBC = "aes_cbc"
+    CHACHA20 = "chacha20"
+    AES_CTR = "aes_ctr"
+    XOR = "xor"
 
 class NexusCrypto:
-    """Шифрование для Nexus Remote"""
-    
     def __init__(self, password="nexus_secure_key_2024"):
         self.password = password.encode() if isinstance(password, str) else password
         self.backend = default_backend()
     
     def _derive_key(self, salt=None, length=32):
-        """енерация ключа из пароля"""
         if salt is None:
             salt = os.urandom(16)
         
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=length,
             salt=salt,
@@ -41,7 +37,6 @@ class NexusCrypto:
         return key, salt
     
     def encrypt(self, data, method=EncryptionMethod.AES_GCM):
-        """ашифровать данные"""
         if not data:
             return data, EncryptionMethod.NONE, {}
         
@@ -49,48 +44,43 @@ class NexusCrypto:
             data = data.encode()
         
         try:
-            if method == EncryptionMethod.AES_GCM:
+            if method == EncryptionMethod.AES_GCM or method == "aes_gcm":
                 return self._aes_gcm_encrypt(data)
-            elif method == EncryptionMethod.AES_CBC:
+            elif method == EncryptionMethod.AES_CBC or method == "aes_cbc":
                 return self._aes_cbc_encrypt(data)
-            elif method == EncryptionMethod.CHACHA20:
+            elif method == EncryptionMethod.CHACHA20 or method == "chacha20":
                 return self._chacha20_encrypt(data)
-            elif method == EncryptionMethod.AES_CTR:
+            elif method == EncryptionMethod.AES_CTR or method == "aes_ctr":
                 return self._aes_ctr_encrypt(data)
-            elif method == EncryptionMethod.XOR:
+            elif method == EncryptionMethod.XOR or method == "xor":
                 return self._xor_encrypt(data)
-            elif method == EncryptionMethod.RSA_AES:
-                return self._rsa_aes_encrypt(data)
             else:
-                return data, EncryptionMethod.NONE, {}
+                # о умолчанию AES-GCM
+                return self._aes_gcm_encrypt(data)
         except Exception as e:
             print(f"Encryption error: {e}")
             return data, EncryptionMethod.NONE, {}
     
     def decrypt(self, data, method, metadata):
-        """асшифровать данные"""
-        if not data or method == EncryptionMethod.NONE:
+        if not data or method == EncryptionMethod.NONE or method == "none":
             return data
         
         try:
-            if method == EncryptionMethod.AES_GCM:
+            if method == EncryptionMethod.AES_GCM or method == "aes_gcm":
                 return self._aes_gcm_decrypt(data, metadata)
-            elif method == EncryptionMethod.AES_CBC:
+            elif method == EncryptionMethod.AES_CBC or method == "aes_cbc":
                 return self._aes_cbc_decrypt(data, metadata)
-            elif method == EncryptionMethod.CHACHA20:
+            elif method == EncryptionMethod.CHACHA20 or method == "chacha20":
                 return self._chacha20_decrypt(data, metadata)
-            elif method == EncryptionMethod.AES_CTR:
+            elif method == EncryptionMethod.AES_CTR or method == "aes_ctr":
                 return self._aes_ctr_decrypt(data, metadata)
-            elif method == EncryptionMethod.XOR:
+            elif method == EncryptionMethod.XOR or method == "xor":
                 return self._xor_decrypt(data, metadata)
-            elif method == EncryptionMethod.RSA_AES:
-                return self._rsa_aes_decrypt(data, metadata)
         except Exception as e:
             print(f"Decryption error: {e}")
             return data
     
     def _aes_gcm_encrypt(self, data):
-        """AES-256-GCM шифрование (рекомендуется)"""
         key, salt = self._derive_key()
         iv = os.urandom(12)
         
@@ -111,7 +101,6 @@ class NexusCrypto:
         return ciphertext, EncryptionMethod.AES_GCM, metadata
     
     def _aes_gcm_decrypt(self, data, metadata):
-        """AES-256-GCM расшифровка"""
         key, _ = self._derive_key(base64.b64decode(metadata['salt']))
         iv = base64.b64decode(metadata['iv'])
         tag = base64.b64decode(metadata['tag'])
@@ -125,11 +114,9 @@ class NexusCrypto:
         return decryptor.update(data) + decryptor.finalize()
     
     def _aes_cbc_encrypt(self, data):
-        """AES-256-CBC + HMAC"""
         key, salt = self._derive_key()
         iv = os.urandom(16)
         
-        # PKCS7 padding
         padder = padding.PKCS7(128).padder()
         padded_data = padder.update(data) + padder.finalize()
         
@@ -141,7 +128,6 @@ class NexusCrypto:
         
         ciphertext = encryptor.update(padded_data) + encryptor.finalize()
         
-        # HMAC для проверки целостности
         h = hmac.HMAC(key, hashes.SHA256(), backend=self.backend)
         h.update(ciphertext)
         mac = h.finalize()
@@ -155,12 +141,10 @@ class NexusCrypto:
         return ciphertext, EncryptionMethod.AES_CBC, metadata
     
     def _aes_cbc_decrypt(self, data, metadata):
-        """AES-256-CBC расшифровка"""
         key, _ = self._derive_key(base64.b64decode(metadata['salt']))
         iv = base64.b64decode(metadata['iv'])
         mac = base64.b64decode(metadata['mac'])
         
-        # роверка HMAC
         h = hmac.HMAC(key, hashes.SHA256(), backend=self.backend)
         h.update(data)
         h.verify(mac)
@@ -173,12 +157,10 @@ class NexusCrypto:
         
         padded_data = decryptor.update(data) + decryptor.finalize()
         
-        # бираем padding
         unpadder = padding.PKCS7(128).unpadder()
         return unpadder.update(padded_data) + unpadder.finalize()
     
     def _chacha20_encrypt(self, data):
-        """ChaCha20-Poly1305 (быстрее на мобильных)"""
         key, salt = self._derive_key(length=32)
         nonce = os.urandom(12)
         
@@ -206,7 +188,6 @@ class NexusCrypto:
         return decryptor.update(data)
     
     def _aes_ctr_encrypt(self, data):
-        """AES-256-CTR (потоковый режим)"""
         key, salt = self._derive_key()
         nonce = os.urandom(16)
         
@@ -238,7 +219,6 @@ class NexusCrypto:
         return decryptor.update(data) + decryptor.finalize()
     
     def _xor_encrypt(self, data):
-        """ростое XOR шифрование (для IoT/слабых устройств)"""
         key = hashlib.sha256(self.password).digest()
         key_length = len(key)
         
@@ -248,28 +228,4 @@ class NexusCrypto:
         return encrypted, EncryptionMethod.XOR, metadata
     
     def _xor_decrypt(self, data, metadata):
-        """XOR расшифровка (симметричная)"""
         return self._xor_encrypt(data)[0]
-    
-    def _rsa_aes_encrypt(self, data):
-        """RSA + AES (асимметричное) - заглушка"""
-        #  реальном приложении: генерируем AES ключ, шифруем его RSA
-        return self._aes_gcm_encrypt(data)
-    
-    def _rsa_aes_decrypt(self, data, metadata):
-        return self._aes_gcm_decrypt(data, metadata)
-
-# Тесты шифрования
-if __name__ == "__main__":
-    crypto = NexusCrypto("my_secure_password_2024")
-    test_data = b"Hello Nexus Remote! " * 100
-    
-    print("=== Тесты шифрования ===\n")
-    
-    for method in [EncryptionMethod.AES_GCM, EncryptionMethod.AES_CBC, 
-                   EncryptionMethod.CHACHA20, EncryptionMethod.XOR]:
-        encrypted, enc_method, meta = crypto.encrypt(test_data, method)
-        decrypted = crypto.decrypt(encrypted, enc_method, meta)
-        
-        success = "✅" if decrypted == test_data else "❌"
-        print(f"{method.value:15} {success} | {len(test_data)} -> {len(encrypted)} bytes")

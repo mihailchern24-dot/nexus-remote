@@ -1,6 +1,6 @@
 ﻿FROM ubuntu:22.04
 RUN apt update && apt install -y build-essential cmake libboost-system-dev python3 python3-pip
-RUN pip3 install cryptography pyautogui pillow lz4 zstandard brotli python-snappy || true
+RUN pip3 install cryptography==41.0.7 pillow lz4 zstandard brotli python-snappy || true
 COPY . /app
 WORKDIR /app/build
 RUN cmake .. -DBUILD_SHARED_LIBS=OFF
