@@ -143,8 +143,20 @@ static bool parse_command_payload(const std::string &message,
     return false;
 }
 
+
+// HTTP health check for Render
+static bool handle_http_health(socket_t s, const char* data, int len) {
+    if (len >= 4 && strncmp(data, "GET ", 4) == 0) {
+        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nNexus Server OK";
+        send(s, response, (int)strlen(response), 0);
+        close_socket(s);
+        return true;
+    }
+    return false;
+}
+
 static bool handshake_and_join(socket_t s, std::string &peer_id) {
-    std::string request = read_http_request(s);
+    char firstBytes[4]; recv(s, firstBytes, 4, MSG_PEEK); if (handle_http_health(s, firstBytes, 4)) { close_socket(s); continue; }`n    `std::string request = read_http_request(s);
     if (request.empty()) return false;
     std::string key;
     if (!parse_websocket_key(request, key)) return false;
@@ -248,4 +260,5 @@ int main(int argc, char** argv) {
     sockets_cleanup();
     return 0;
 }
+
 
