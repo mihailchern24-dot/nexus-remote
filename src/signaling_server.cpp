@@ -1,6 +1,7 @@
 #include <cstring>
 #include "../include/socket_utils.h"
 #include "../include/websocket_utils.h"
+#include "../include/wol.h"
 
 #include <csignal>
 #include <iostream>
@@ -224,7 +225,13 @@ static void client_thread(socket_t s) {
                 send_frame(s, response);
                 std::cout << "Peer " << peer_id << " requested peer list\n";
                 log_peers();
-            } else if (command == "UNREGISTER") {
+            } else if (command == "WOL") {
+                std::string mac = payload;
+                if (nexus::wol::send_magic_packet(mac)) {
+                    send_frame(s, "WOL_OK");
+                } else {
+                    send_frame(s, "WOL_FAIL");
+                } else if (command == "UNREGISTER") {
                 send_frame(s, "UNREGISTERED");
                 std::cout << "Peer unregistered: " << peer_id << "\n";
                 log_peers();

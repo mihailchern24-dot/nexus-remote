@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(NexusRemote VERSION 2.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -21,6 +21,7 @@ add_library(nexus_core STATIC
     src/stun.cpp src/turn.cpp src/tls_utils.cpp
     src/input_filter.cpp src/gamepad_manager.cpp
     src/nexus_client.cpp
+    src/wol.cpp
     
 )
 target_include_directories(nexus_core PUBLIC include )
