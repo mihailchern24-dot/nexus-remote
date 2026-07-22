@@ -7,5 +7,5 @@ RUN make signaling_server relay_server
 
 EXPOSE 10000 9000 8080
 
-# Python health on 8080, signaling on PORT, relay on 9000
-CMD python3 /app/health_server.py 8080 & ./relay_server 9000 & ./signaling_server \ & wait
+# Health on 8080, relay on 9000, signaling on 10000
+CMD python3 /app/health_server.py 8080 & ./relay_server 9000 & ./signaling_server 10000 & wait
