@@ -1,73 +1,48 @@
 ﻿#!/usr/bin/env python3
-# http_signaling.py - Nexus Remote Server v2.0
-# оддержка: Windows, Linux, macOS, Android, iOS, PlayStation, Xbox, Nintendo, Android TV, Android Auto
+# http_signaling.py - Nexus Remote Server v2.0 с сжатием и шифрованием
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import time
 import os
 import base64
+from compression import AdaptiveCompressor, CompressionMethod
+from encryption import NexusCrypto, EncryptionMethod
 from codec_config import get_codec_config, get_quality_preset
 
-peers = {}       # peer_id -> {platform, ip, port, codec, status}
-offers = {}      # target -> {from, sdp, codec_config}
-sessions = {}    # session_id -> {peer1, peer2, codec, quality}
-messages = {}    # peer_id -> [{from, data, type, time}]
-streams = {}     # stream_id -> {source, target, codec, bitrate, fps, resolution}
+peers = {}
+streams = {}
+messages = {}
+crypto = NexusCrypto()
 
 class NexusHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
+        self._cors_headers()
         self.send_response(200)
-        self.send_header('X-Nexus-Server', 'v2.0')
         self.end_headers()
     
     def do_OPTIONS(self):
+        self._cors_headers()
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
     
     def do_GET(self):
-        if self.path == '/' or self.path == '/health':
-            self._json_response({"status": "ok", "server": "Nexus Remote v2.0"})
-        
-        elif self.path == '/peers':
-            self._json_response({
-                "peers": {pid: {"platform": p.get("platform"), "status": p.get("status")} 
-                         for pid, p in peers.items()},
-                "count": len(peers)
-            })
-        
-        elif self.path.startswith('/offer/'):
-            target = self.path.split('/')[-1]
-            offer = offers.get(target)
-            if offer:
-                self._json_response(offer)
-            else:
-                self._json_error(404, "no_offer")
-        
-        elif self.path == '/streams':
-            self._json_response({
-                "streams": list(streams.values()),
-                "count": len(streams)
-            })
-        
+        if self.path == '/':
+            self._json({"server": "Nexus Remote v2.0", "features": ["compression", "encryption"]})
         elif self.path == '/status':
-            self._json_response({
+            self._json({
                 "status": "running",
                 "peers": len(peers),
-                "offers": len(offers),
-                "sessions": len(sessions),
                 "streams": len(streams),
-                "platforms": self._count_platforms()
+                "compression_methods": [m.value for m in CompressionMethod],
+                "encryption_methods": [m.value for m in EncryptionMethod]
             })
-        
-        elif self.path == '/codecs':
-            platform = self.headers.get('X-Platform', 'linux')
-            self._json_response(get_codec_config(platform))
-        
+        elif self.path == '/methods':
+            self._json({
+                "compression": [m.value for m in CompressionMethod],
+                "encryption": [m.value for m in EncryptionMethod]
+            })
         else:
-            self._json_error(404, "not_found")
+            self._json_error(404)
     
     def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
@@ -78,164 +53,166 @@ class NexusHandler(BaseHTTPRequestHandler):
         except:
             data = {}
         
-        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
-        
         if self.path == '/register':
-            peer_id = data.get('peer_id', '')
-            platform = data.get('platform', 'unknown')
-            codec = data.get('codec', 'auto')
-            resolution = data.get('resolution', '1080p')
-            fps = data.get('fps', 30)
-            
-            if peer_id:
-                peers[peer_id] = {
-                    'platform': platform,
-                    'ip': client_ip,
-                    'port': data.get('port', 0),
-                    'codec': codec,
-                    'resolution': resolution,
-                    'fps': fps,
-                    'status': 'online',
-                    'registered_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'last_seen': time.time()
-                }
-                
-                # вто-выбор кодека для платформы
-                codec_config = get_codec_config(platform)
-                
-                self._json_response({
-                    "status": "registered",
-                    "peer_id": peer_id,
-                    "platform": platform,
-                    "codec_config": codec_config,
-                    "peers": list(peers.keys()),
-                    "count": len(peers)
-                })
-                print(f"[+] {peer_id} ({platform}) registered. Total: {len(peers)}")
-            else:
-                self._json_error(400, "peer_id required")
-        
+            self._handle_register(data)
         elif self.path == '/start_stream':
-            # ачать стриминг экрана
-            source = data.get('source', '')
-            target = data.get('target', '')
-            quality = data.get('quality', 'auto')
-            
-            if source in peers and target in peers:
-                stream_id = f"stream_{source}_{target}_{int(time.time())}"
-                quality_config = get_quality_preset(quality)
-                
-                streams[stream_id] = {
-                    'id': stream_id,
-                    'source': source,
-                    'target': target,
-                    'codec': data.get('codec', 'h264'),
-                    'bitrate': quality_config['bitrate'],
-                    'fps': quality_config['fps'],
-                    'resolution': quality_config['resolution'],
-                    'started_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'status': 'active',
-                    'frames_sent': 0
-                }
-                
-                self._json_response({
-                    "status": "streaming",
-                    "stream_id": stream_id,
-                    "config": quality_config
-                })
-                print(f"[STREAM] {source} -> {target} ({quality_config['resolution']} @ {quality_config['fps']}fps)")
-            else:
-                self._json_error(404, "peer not found")
-        
+            self._handle_stream_start(data)
         elif self.path == '/send_frame':
-            # тправить кадр видео
-            stream_id = data.get('stream_id', '')
-            frame_data = data.get('frame', '')  # base64 encoded
-            frame_type = data.get('type', 'video')  # video/audio/input
-            target = data.get('target', '')
-            
-            if target and frame_data:
-                if target not in messages:
-                    messages[target] = []
-                
-                messages[target].append({
-                    'from': data.get('from', 'unknown'),
-                    'type': frame_type,
-                    'data': frame_data,
-                    'size': len(frame_data),
-                    'timestamp': time.time(),
-                    'stream_id': stream_id
-                })
-                
-                # бновляем счетчик кадров
-                if stream_id in streams:
-                    streams[stream_id]['frames_sent'] += 1
-                
-                self._json_response({"status": "sent", "size": len(frame_data)})
-            else:
-                self._json_error(400, "stream_id and frame required")
-        
+            self._handle_send_frame(data)
         elif self.path == '/get_frame':
-            # олучить кадр для отображения
-            peer_id = data.get('peer_id', '')
-            stream_id = data.get('stream_id', '')
-            
-            if peer_id in messages and messages[peer_id]:
-                frame = messages[peer_id].pop(0)
-                self._json_response(frame)
-            else:
-                self._json_response({"type": "empty"})
-        
-        elif self.path == '/stop_stream':
-            stream_id = data.get('stream_id', '')
-            if stream_id in streams:
-                streams[stream_id]['status'] = 'stopped'
-                streams[stream_id]['stopped_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
-                self._json_response({"status": "stopped", "stream_id": stream_id})
-            else:
-                self._json_error(404, "stream not found")
-        
-        elif self.path == '/ping':
-            peer_id = data.get('peer_id', '')
-            if peer_id in peers:
-                peers[peer_id]['last_seen'] = time.time()
-                self._json_response({"status": "pong"})
-            else:
-                self._json_error(404, "peer not found")
-        
+            self._handle_get_frame(data)
         else:
-            self._json_error(404, "not_found")
+            self._json_error(404)
     
-    def _json_response(self, data):
+    def _handle_register(self, data):
+        peer_id = data.get('peer_id', '')
+        if peer_id:
+            peers[peer_id] = {
+                'platform': data.get('platform', 'unknown'),
+                'compression': data.get('compression', 'zlib'),
+                'encryption': data.get('encryption', 'aes_gcm'),
+                'status': 'online',
+                'registered_at': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            self._json({
+                "status": "registered",
+                "peer_id": peer_id,
+                "supported_methods": {
+                    "compression": [m.value for m in CompressionMethod],
+                    "encryption": [m.value for m in EncryptionMethod]
+                }
+            })
+    
+    def _handle_stream_start(self, data):
+        source = data.get('source', '')
+        target = data.get('target', '')
+        compression = data.get('compression', 'zlib')
+        encryption = data.get('encryption', 'aes_gcm')
+        quality = data.get('quality', 'high')
+        
+        if source in peers and target in peers:
+            stream_id = f"stream_{source}_{target}_{int(time.time())}"
+            quality_config = get_quality_preset(quality)
+            
+            streams[stream_id] = {
+                'id': stream_id,
+                'source': source,
+                'target': target,
+                'compression': compression,
+                'encryption': encryption,
+                'quality': quality_config,
+                'status': 'active',
+                'frames_sent': 0,
+                'bytes_sent': 0,
+                'bytes_saved': 0
+            }
+            
+            self._json({
+                "status": "streaming",
+                "stream_id": stream_id,
+                "compression": compression,
+                "encryption": encryption,
+                "quality": quality_config
+            })
+    
+    def _handle_send_frame(self, data):
+        stream_id = data.get('stream_id', '')
+        frame_data = data.get('frame', '')
+        target = data.get('target', '')
+        compression = data.get('compression', 'zlib')
+        encryption = data.get('encryption', 'aes_gcm')
+        
+        if target and frame_data:
+            # екодируем base64
+            raw_data = base64.b64decode(frame_data)
+            original_size = len(raw_data)
+            
+            # Сжимаем
+            compressed, comp_method, ratio = AdaptiveCompressor.best_compress(raw_data)
+            compressed_size = len(compressed)
+            
+            # Шифруем
+            encrypted, enc_method, meta = crypto.encrypt(compressed, 
+                EncryptionMethod(encryption) if encryption != 'auto' else EncryptionMethod.AES_GCM)
+            encrypted_size = len(encrypted)
+            
+            # одируем обратно в base64
+            final_data = base64.b64encode(encrypted).decode()
+            
+            if target not in messages:
+                messages[target] = []
+            
+            messages[target].append({
+                'from': data.get('from', 'unknown'),
+                'type': 'video',
+                'data': final_data,
+                'compression': comp_method.value,
+                'encryption': enc_method.value,
+                'metadata': meta,
+                'original_size': original_size,
+                'compressed_size': compressed_size,
+                'encrypted_size': encrypted_size,
+                'timestamp': time.time(),
+                'stream_id': stream_id
+            })
+            
+            if stream_id in streams:
+                streams[stream_id]['frames_sent'] += 1
+                streams[stream_id]['bytes_sent'] += original_size
+                streams[stream_id]['bytes_saved'] += (original_size - encrypted_size)
+            
+            self._json({
+                "status": "sent",
+                "original": original_size,
+                "compressed": compressed_size,
+                "encrypted": encrypted_size,
+                "compression_ratio": f"{ratio:.1f}%",
+                "total_saved": f"{(original_size - encrypted_size) / original_size * 100:.1f}%"
+            })
+    
+    def _handle_get_frame(self, data):
+        peer_id = data.get('peer_id', '')
+        if peer_id in messages and messages[peer_id]:
+            frame = messages[peer_id].pop(0)
+            
+            # екодируем
+            encrypted = base64.b64decode(frame['data'])
+            
+            # асшифровываем
+            decrypted = crypto.decrypt(encrypted, 
+                EncryptionMethod(frame['encryption']), 
+                frame.get('metadata', {}))
+            
+            # аспаковываем
+            decompressed = AdaptiveCompressor.decompress(decrypted,
+                CompressionMethod(frame['compression']))
+            
+            # озвращаем оригинал
+            frame['data'] = base64.b64encode(decompressed).decode()
+            self._json(frame)
+        else:
+            self._json({"type": "empty"})
+    
+    def _json(self, data):
+        self._cors_headers()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
     
-    def _json_error(self, code, message):
+    def _json_error(self, code):
+        self._cors_headers()
         self.send_response(code)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        self.wfile.write(json.dumps({"error": message}).encode())
     
-    def _count_platforms(self):
-        platforms = {}
-        for p in peers.values():
-            plat = p.get('platform', 'unknown')
-            platforms[plat] = platforms.get(plat, 0) + 1
-        return platforms
+    def _cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
     
     def log_message(self, format, *args):
         pass
 
 port = int(os.environ.get('PORT', 10000))
-print(f"""
-╔══════════════════════════════════════════════╗
-║     Nexus Remote Server v2.0                 ║
-║     Port: {port}                              ║
-║     Platforms: All                           ║
-╚══════════════════════════════════════════════╝
-""")
+print(f"Nexus Remote v2.0 with Compression & Encryption on port {port}")
 HTTPServer(('0.0.0.0', port), NexusHandler).serve_forever()
