@@ -1,18 +1,29 @@
 #include "../include/stun.h"
 #include "../include/socket_utils.h"
-// arpa/inet.h - not needed on Windows
-// unistd.h - not needed on Windows
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <unistd.h>
+#endif
 #include <cstring>
 #include <random>
 #include <vector>
 #include <iostream>
-#ifdef _WIN32
-#include <ws2tcpip.h>
-#endif
-#include <iostream>
-#ifdef _WIN32
-#include <ws2tcpip.h>
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static uint16_t get_transaction_id(uint8_t id[12]) {
     static std::mt19937 rng((uint32_t)std::random_device{}());
@@ -92,3 +103,4 @@ std::pair<std::string, uint16_t> stun_get_public_endpoint(const std::string &ser
 
     return {"", 0};
 }
+
