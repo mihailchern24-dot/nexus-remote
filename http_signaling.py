@@ -1,36 +1,13 @@
-﻿#!/usr/bin/env python3
-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # http_signaling.py - Nexus Remote Server v2.1
-def send_wol_packet(mac_address):
-    """������� Wake-on-LAN Magic Packet"""
-    try:
-        import socket
-        import struct
-        
-        # ������������� MAC ������
-        mac = mac_address.replace(':', '').replace('-', '').replace(' ', '')
-        if len(mac) != 12:
-            return False
-        
-        # Magic Packet: 6 ���� 0xFF + 16 ��� MAC
-        data = bytes.fromhex('FF' * 6 + mac * 16)
-        
-        # ������� broadcast UDP �� ���� 9
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(data, ('255.255.255.255', 9))
-        sock.close()
-        return True
-    except:
-        return False
-
-
-
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import time
 import os
 import base64
+import socket
+import struct
 from compression import AdaptiveCompressor, CompressionMethod
 from encryption import NexusCrypto, EncryptionMethod
 
@@ -39,7 +16,6 @@ streams = {}
 messages = {}
 crypto = NexusCrypto()
 
-# ��������� ������� �������
 CODEC_CONFIGS = {
     "windows": {"primary": "h264_nvenc", "fallback": "h264_mf", "software": "libx264"},
     "linux": {"primary": "h264_vaapi", "software": "libx264"},
@@ -55,6 +31,20 @@ QUALITY_PRESETS = {
     "low": {"bitrate": 5000, "fps": 24, "resolution": "480p"},
     "minimal": {"bitrate": 2000, "fps": 15, "resolution": "360p"}
 }
+
+def send_wol_packet(mac_address):
+    try:
+        mac = mac_address.replace(':', '').replace('-', '').replace(' ', '')
+        if len(mac) != 12:
+            return False
+        data = bytes.fromhex('FF' * 6 + mac * 16)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.sendto(data, ('255.255.255.255', 9))
+        sock.close()
+        return True
+    except:
+        return False
 
 class NexusHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -87,15 +77,6 @@ class NexusHandler(BaseHTTPRequestHandler):
             })
         elif self.path == '/peers':
             self._json({"peers": list(peers.keys()), "count": len(peers)})
-        elif self.path == '/wol':
-            mac = data.get('mac', '')
-            peer_id = data.get('peer_id', '')
-            if mac:
-                #  �������� ����������: �������� Magic Packet
-                success = send_wol_packet(mac)`n                self._json({"status": "wol_sent", "success": success, "mac": mac, "peer": peer_id})
-            else:
-                self._json_error(400)
-
         else:
             self._json_error(404)
     
@@ -138,34 +119,20 @@ class NexusHandler(BaseHTTPRequestHandler):
                 quality_config = QUALITY_PRESETS.get(quality, QUALITY_PRESETS['high'])
                 
                 streams[stream_id] = {
-                    'id': stream_id,
-                    'source': source,
-                    'target': target,
+                    'id': stream_id, 'source': source, 'target': target,
                     'compression': data.get('compression', 'zlib'),
                     'encryption': data.get('encryption', 'aes_gcm'),
-                    'quality': quality_config,
-                    'status': 'active',
-                    'frames_sent': 0
+                    'quality': quality_config, 'status': 'active', 'frames_sent': 0
                 }
                 
                 self._json({
-                    "status": "streaming",
-                    "stream_id": stream_id,
+                    "status": "streaming", "stream_id": stream_id,
                     "quality": quality_config,
                     "compression": data.get('compression', 'zlib'),
                     "encryption": data.get('encryption', 'aes_gcm')
                 })
-        elif self.path == '/wol':
-            mac = data.get('mac', '')
-            peer_id = data.get('peer_id', '')
-            if mac:
-                #  �������� ����������: �������� Magic Packet
-                success = send_wol_packet(mac)`n                self._json({"status": "wol_sent", "success": success, "mac": mac, "peer": peer_id})
             else:
-                self._json_error(400)
-
-            else:
-            self._json_error(404)
+                self._json_error(404)
         
         elif self.path == '/send_frame':
             stream_id = data.get('stream_id', '')
@@ -176,28 +143,19 @@ class NexusHandler(BaseHTTPRequestHandler):
                 raw_data = base64.b64decode(frame_data) if isinstance(frame_data, str) else frame_data
                 original_size = len(raw_data)
                 
-                # ���-������
                 compressed, comp_method, ratio = AdaptiveCompressor.best_compress(raw_data)
-                
-                # ����������
                 encrypted, enc_method, meta = crypto.encrypt(compressed)
-                
                 final_data = base64.b64encode(encrypted).decode()
                 
                 if target not in messages:
                     messages[target] = []
                 
                 messages[target].append({
-                    'from': data.get('from', 'unknown'),
-                    'type': 'video',
-                    'data': final_data,
-                    'compression': comp_method.value,
-                    'encryption': enc_method.value,
-                    'metadata': meta,
-                    'original_size': original_size,
-                    'compressed_size': len(compressed),
-                    'encrypted_size': len(encrypted),
-                    'timestamp': time.time(),
+                    'from': data.get('from', 'unknown'), 'type': 'video',
+                    'data': final_data, 'compression': comp_method.value,
+                    'encryption': enc_method.value, 'metadata': meta,
+                    'original_size': original_size, 'compressed_size': len(compressed),
+                    'encrypted_size': len(encrypted), 'timestamp': time.time(),
                     'stream_id': stream_id
                 })
                 
@@ -216,11 +174,9 @@ class NexusHandler(BaseHTTPRequestHandler):
             peer_id = data.get('peer_id', '')
             if peer_id in messages and messages[peer_id]:
                 frame = messages[peer_id].pop(0)
-                
                 encrypted = base64.b64decode(frame['data'])
                 decrypted = crypto.decrypt(encrypted, frame['encryption'], frame.get('metadata', {}))
                 decompressed = AdaptiveCompressor.decompress(decrypted, CompressionMethod(frame['compression']))
-                
                 frame['data'] = base64.b64encode(decompressed).decode()
                 self._json(frame)
             else:
@@ -231,26 +187,16 @@ class NexusHandler(BaseHTTPRequestHandler):
             if stream_id in streams:
                 streams[stream_id]['status'] = 'stopped'
                 self._json({"status": "stopped"})
+            else:
+                self._json_error(404)
+        
         elif self.path == '/wol':
             mac = data.get('mac', '')
-            peer_id = data.get('peer_id', '')
             if mac:
-                #  �������� ����������: �������� Magic Packet
-                success = send_wol_packet(mac)`n                self._json({"status": "wol_sent", "success": success, "mac": mac, "peer": peer_id})
+                success = send_wol_packet(mac)
+                self._json({"status": "wol_sent", "success": success, "mac": mac})
             else:
                 self._json_error(400)
-
-            else:
-            self._json_error(404)
-        elif self.path == '/wol':
-            mac = data.get('mac', '')
-            peer_id = data.get('peer_id', '')
-            if mac:
-                #  �������� ����������: �������� Magic Packet
-                success = send_wol_packet(mac)`n                self._json({"status": "wol_sent", "success": success, "mac": mac, "peer": peer_id})
-            else:
-                self._json_error(400)
-
         
         else:
             self._json_error(404)
@@ -270,7 +216,7 @@ class NexusHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-port = int(os.environ.get('PORT', 10000))
-print(f"Nexus Remote v2.1 with Compression & Encryption on port {port}")
-HTTPServer(('0.0.0.0', port), NexusHandler).serve_forever()
-
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 10000))
+    print(f"Nexus Remote v2.1 on port {port}")
+    HTTPServer(('0.0.0.0', port), NexusHandler).serve_forever()
