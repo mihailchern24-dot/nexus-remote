@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Remote - Register</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a3e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 400px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 { text-align: center; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; margin-bottom: 24px; }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; margin-bottom: 6px; color: #888; font-size: 12px; }
+        .input-group input {
+            width: 100%; padding: 12px; border-radius: 10px;
+            border: 1px solid #2a2a4a; background: #0f0f1a; color: #fff; font-size: 14px;
+        }
+        .input-group input:focus { outline: none; border-color: #6366f1; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin: 6px 0; }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover { background: #5558e6; }
+        .links { text-align: center; margin-top: 16px; font-size: 13px; }
+        .links a { color: #6366f1; text-decoration: none; }
+        .msg { font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📝 Create Account</h1>
+        
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="your@email.com">
+        </div>
+        <div class="input-group">
+            <label>Password (min 8 characters)</label>
+            <input type="password" id="password" placeholder="••••••••">
+        </div>
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="confirm" placeholder="••••••••">
+        </div>
+        
+        <p class="msg" id="error" style="color:#ef4444;"></p>
+        <p class="msg" id="success" style="color:#22c55e;"></p>
+        
+        <button class="btn btn-primary" onclick="register()">Create Account</button>
+        
+        <div class="links">
+            Already have an account? <a href="/">Sign in</a>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirm = document.getElementById('confirm').value.trim();
+            
+            if (!email || !password) return show('Please fill all fields', 'error');
+            if (password !== confirm) return show('Passwords do not match', 'error');
+            if (password.length < 8) return show('Password must be at least 8 characters', 'error');
+            
+            try {
+                const resp = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const data = await resp.json();
+                
+                if (data.token) {
+                    show('Account created! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = /?email=, 1500);
+                } else {
+                    show(data.error || 'Registration failed', 'error');
+                }
+            } catch(e) {
+                show('Connection error', 'error');
+            }
+        }
+        
+        function show(msg, type) {
+            const el = document.getElementById(type);
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

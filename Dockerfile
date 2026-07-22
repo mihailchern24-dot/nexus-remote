@@ -8,4 +8,5 @@ RUN make signaling_server relay_server
 
 EXPOSE 10000 9000 8080
 
-CMD python3 /app/http_signaling.py & ./relay_server 9000 & ./signaling_server 8080 & wait
+# Auth server на PORT, relay на 9000, signaling на 8080
+CMD python3 /app/auth_server.py & ./relay_server 9000 & ./signaling_server 8080 & wait
