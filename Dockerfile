@@ -7,5 +7,5 @@ RUN make signaling_server relay_server
 
 EXPOSE 10000 9000
 
-# Signaling на PORT (Render), relay на 9000
-CMD ./relay_server 9000 & ./signaling_server \ & wait
+# Фиксированный порт 10000 для signaling, relay на 9000
+CMD ./relay_server 9000 & ./signaling_server 10000 & wait
