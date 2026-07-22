@@ -156,7 +156,7 @@ static bool handle_http_health(socket_t s, const char* data, int len) {
 }
 
 static bool handshake_and_join(socket_t s, std::string &peer_id) {
-    char firstBytes[4]; recv(s, firstBytes, 4, MSG_PEEK); if (handle_http_health(s, firstBytes, 4)) { close_socket(s); continue; }std::string request = read_http_request(s);
+std::string request = read_http_request(s);
     if (request.empty()) return false;
     std::string key;
     if (!parse_websocket_key(request, key)) return false;
