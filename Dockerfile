@@ -5,6 +5,7 @@ WORKDIR /app/build
 RUN cmake .. -DBUILD_SHARED_LIBS=OFF
 RUN make signaling_server relay_server
 
-EXPOSE 10000 9000
+EXPOSE 10000 9000 8080
 
-CMD python3 /app/health_server.py & ./relay_server 9000 & ./signaling_server 8080 & wait
+# Python health on 8080, signaling on PORT, relay on 9000
+CMD python3 /app/health_server.py 8080 & ./relay_server 9000 & ./signaling_server \ & wait
