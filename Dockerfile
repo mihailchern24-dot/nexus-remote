@@ -1,11 +1,11 @@
 ﻿FROM ubuntu:22.04
-RUN apt update && apt install -y build-essential cmake libboost-system-dev python3
+RUN apt update && apt install -y build-essential cmake libboost-system-dev
 COPY . /app
 WORKDIR /app/build
 RUN cmake .. -DBUILD_SHARED_LIBS=OFF
 RUN make signaling_server relay_server
 
-EXPOSE 10000 9000 8080
+EXPOSE 10000 9000
 
-# Health on 8080, relay on 9000, signaling on 10000
-CMD python3 /app/health_server.py 8080 & ./relay_server 9000 & ./signaling_server 10000 & wait
+# signaling на PORT (Render), relay на 9000
+CMD ./relay_server 9000 & ./signaling_server \ & wait
