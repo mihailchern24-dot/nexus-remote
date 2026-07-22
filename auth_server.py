@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # auth_server.py - Nexus Remote Auth Backend
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -71,6 +71,11 @@ class AuthDB:
 db = AuthDB()
 
 class AuthHandler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+    
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -80,13 +85,13 @@ class AuthHandler(BaseHTTPRequestHandler):
     
     def do_GET(self):
         if self.path == '/':
-            self._serve_html('webapp/index.html')
+            self._serve_html('/app/webapp/index.html')
         elif self.path == '/login':
-            self._serve_html('webapp/login.html')
+            self._serve_html('/app/webapp/index.html')
         elif self.path == '/register':
-            self._serve_html('webapp/register.html')
+            self._serve_html('/app/webapp/register.html')
         elif self.path == '/reset':
-            self._serve_html('webapp/reset.html')
+            self._serve_html('/app/webapp/reset.html')
         elif self.path == '/api/status':
             self._json({"status": "running", "users": "online"})
         else:
@@ -155,3 +160,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     print(f"Auth server on port {port}")
     HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
+
