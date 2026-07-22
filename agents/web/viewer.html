@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Remote - Web Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 30px 0; }
+        .header h1 { font-size: 28px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card { background: #1a1a2e; border-radius: 16px; padding: 20px; margin: 16px 0; border: 1px solid #2a2a4a; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin: 4px; }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #2a2a4a; background: #0f0f1a; color: #fff; margin: 8px 0; }
+        #screen { width: 100%; max-width: 720px; border-radius: 8px; border: 2px solid #333; }
+        .peer-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .peer-badge { background: #6366f1; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .stat { background: #16213e; padding: 12px; border-radius: 8px; text-align: center; min-width: 80px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #6366f1; }
+        .stat-label { font-size: 11px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Nexus Remote Web Viewer</h1>
+            <p style="color:#666;margin-top:8px">Connect to any device from your browser</p>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom:12px">Connect to Device</h2>
+            <input type="text" class="input" id="peerId" placeholder="Enter Peer ID">
+            <input type="password" class="input" id="password" placeholder="Password (optional)">
+            <button class="btn btn-primary" onclick="connectToPeer()">Connect</button>
+            <button class="btn btn-danger" onclick="disconnect()" style="display:none" id="disconnectBtn">Disconnect</button>
+        </div>
+
+        <div class="card" style="text-align:center">
+            <canvas id="screen" width="720" height="480"></canvas>
+            <div class="stats" style="margin-top:16px;justify-content:center">
+                <div class="stat">
+                    <div class="stat-value" id="fpsStat">0</div>
+                    <div class="stat-label">FPS</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bytesStat">0 KB</div>
+                    <div class="stat-label">Received</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyStat">0ms</div>
+                    <div class="stat-label">Latency</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom:12px">Online Peers</h2>
+            <div class="peer-list" id="peerList">
+                <span style="color:#666">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER = 'https://nexus-remote.onrender.com';
+        let peerId = 'web-' + Math.random().toString(36).substr(2, 9);
+        let connectedPeer = null;
+        let streamInterval = null;
+        let canvas = document.getElementById('screen');
+        let ctx = canvas.getContext('2d');
+        let framesReceived = 0;
+        let bytesReceived = 0;
+        let startTime = Date.now();
+
+        async function register() {
+            try {
+                const resp = await fetch(SERVER + '/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        peer_id: peerId,
+                        platform: 'web',
+                        compression: 'zstd',
+                        encryption: 'aes_gcm'
+                    })
+                });
+                const data = await resp.json();
+                console.log('Registered:', data);
+                loadPeers();
+            } catch(e) {
+                console.error('Registration failed:', e);
+            }
+        }
+
+        async function loadPeers() {
+            try {
+                const resp = await fetch(SERVER + '/peers');
+                const data = await resp.json();
+                const peerList = document.getElementById('peerList');
+                peerList.innerHTML = data.peers
+                    .filter(p => p !== peerId)
+                    .map(p => <span class="peer-badge" onclick="document.getElementById('peerId').value=''"></span>)
+                    .join('') || '<span style="color:#666">No peers online</span>';
+            } catch(e) {
+                console.error('Load peers failed:', e);
+            }
+        }
+
+        async function connectToPeer() {
+            const targetPeer = document.getElementById('peerId').value;
+            if (!targetPeer) return;
+
+            try {
+                const resp = await fetch(SERVER + '/start_stream', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        source: targetPeer,
+                        target: peerId,
+                        quality: 'high',
+                        compression: 'zstd',
+                        encryption: 'aes_gcm'
+                    })
+                });
+                const data = await resp.json();
+                
+                if (data.status === 'streaming') {
+                    connectedPeer = targetPeer;
+                    document.getElementById('disconnectBtn').style.display = 'inline-block';
+                    startReceiving();
+                }
+            } catch(e) {
+                console.error('Connect failed:', e);
+            }
+        }
+
+        async function startReceiving() {
+            const receiveFrame = async () => {
+                if (!connectedPeer) return;
+                
+                try {
+                    const resp = await fetch(SERVER + '/get_frame', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({peer_id: peerId})
+                    });
+                    const frame = await resp.json();
+                    
+                    if (frame.type === 'video' && frame.data) {
+                        // екодируем base64 и отображаем
+                        const img = new Image();
+                        img.onload = () => {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0);
+                            framesReceived++;
+                            bytesReceived += frame.data.length;
+                            
+                            // бновляем статистику
+                            const elapsed = (Date.now() - startTime) / 1000;
+                            document.getElementById('fpsStat').textContent = Math.round(framesReceived / elapsed);
+                            document.getElementById('bytesStat').textContent = Math.round(bytesReceived / 1024) + ' KB';
+                        };
+                        img.src = 'data:image/jpeg;base64,' + frame.data;
+                    }
+                } catch(e) {
+                    console.error('Receive error:', e);
+                }
+            };
+            
+            streamInterval = setInterval(receiveFrame, 1000/30); // 30 FPS
+        }
+
+        function disconnect() {
+            connectedPeer = null;
+            if (streamInterval) clearInterval(streamInterval);
+            document.getElementById('disconnectBtn').style.display = 'none';
+        }
+
+        // апуск
+        register();
+        setInterval(loadPeers, 5000); // бновляем список пиров каждые 5 секунд
+    </script>
+</body>
+</html>

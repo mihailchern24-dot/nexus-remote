@@ -1,0 +1,6 @@
+﻿Package: nexus-remote
+Version: 4.0.0
+Architecture: amd64
+Maintainer: Nexus Team
+Description: Remote desktop and streaming
+Depends: python3, python3-pip

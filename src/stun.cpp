@@ -1,7 +1,7 @@
 #include "../include/stun.h"
 #include "../include/socket_utils.h"
-#include <arpa/inet.h>
-#include <unistd.h>
+// arpa/inet.h - not needed on Windows
+// unistd.h - not needed on Windows
 #include <cstring>
 #include <random>
 #include <vector>
