@@ -10,5 +10,7 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', 10000))
+# спользуем PORT из Render (обычно 10000), сигнальный сервер будет на 8080
+port = int(os.environ.get('PORT', 10000))
+print(f"Health server starting on port {port}")
 HTTPServer(('0.0.0.0', port), HealthHandler).serve_forever()
