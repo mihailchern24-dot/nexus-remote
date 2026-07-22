@@ -1,4 +1,4 @@
-ï»¿#include "../include/capture/screen_capturer.h"
+#include "../include/capture/screen_capturer.h"
 #include "../include/video/video_encoder.h"
 #include "../include/gamepad_manager.h"
 #include "../include/socket_utils.h"
@@ -127,7 +127,7 @@ void DrawModernUI(HWND hwnd) {
             break;
         case 3: // Files
             g.DrawString(L"Cloud Storage", -1, &h2, PointF((float)cx, (float)cy), &whiteBr);
-            g.DrawString(L"Google Drive  â€¢  Yandex Disk  â€¢  OneDrive  â€¢  Dropbox", -1, &info, PointF((float)cx, (float)(cy+35*scale)), &grayBr);
+            g.DrawString(L"Google Drive  •  Yandex Disk  •  OneDrive  •  Dropbox", -1, &info, PointF((float)cx, (float)(cy+35*scale)), &grayBr);
             g.DrawString(L"Connect your cloud accounts to access files remotely", -1, &info, PointF((float)cx, (float)(cy+60*scale)), &grayBr);
             break;
         case 4: // Account
