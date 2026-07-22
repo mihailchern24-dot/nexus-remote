@@ -1,59 +1,73 @@
 ﻿#!/usr/bin/env python3
-# http_signaling.py - HTTP API для Nexus Remote на Render
+# http_signaling.py - Nexus Remote Server v2.0
+# оддержка: Windows, Linux, macOS, Android, iOS, PlayStation, Xbox, Nintendo, Android TV, Android Auto
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
-import socket
-import struct
-import threading
-import os
 import time
+import os
+import base64
+from codec_config import get_codec_config, get_quality_preset
 
-peers = {}  # peer_id -> {"status": "online", "ip": "...", "port": ...}
-offers = {}  # target -> {"from": ..., "sdp": ...}
-relay_connections = {}  # session_id -> {"peer1": ..., "peer2": ...}
+peers = {}       # peer_id -> {platform, ip, port, codec, status}
+offers = {}      # target -> {from, sdp, codec_config}
+sessions = {}    # session_id -> {peer1, peer2, codec, quality}
+messages = {}    # peer_id -> [{from, data, type, time}]
+streams = {}     # stream_id -> {source, target, codec, bitrate, fps, resolution}
 
-class SignalingHandler(BaseHTTPRequestHandler):
+class NexusHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.send_response(200)
+        self.send_header('X-Nexus-Server', 'v2.0')
+        self.end_headers()
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
     
     def do_GET(self):
         if self.path == '/' or self.path == '/health':
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'OK')
+            self._json_response({"status": "ok", "server": "Nexus Remote v2.0"})
+        
         elif self.path == '/peers':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "peers": list(peers.keys()),
+            self._json_response({
+                "peers": {pid: {"platform": p.get("platform"), "status": p.get("status")} 
+                         for pid, p in peers.items()},
                 "count": len(peers)
-            }).encode())
+            })
+        
         elif self.path.startswith('/offer/'):
             target = self.path.split('/')[-1]
-            if target in offers:
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(offers[target]).encode())
+            offer = offers.get(target)
+            if offer:
+                self._json_response(offer)
             else:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "no_offer"}).encode())
+                self._json_error(404, "no_offer")
+        
+        elif self.path == '/streams':
+            self._json_response({
+                "streams": list(streams.values()),
+                "count": len(streams)
+            })
+        
         elif self.path == '/status':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({
+            self._json_response({
                 "status": "running",
                 "peers": len(peers),
                 "offers": len(offers),
-                "sessions": len(relay_connections)
-            }).encode())
+                "sessions": len(sessions),
+                "streams": len(streams),
+                "platforms": self._count_platforms()
+            })
+        
+        elif self.path == '/codecs':
+            platform = self.headers.get('X-Platform', 'linux')
+            self._json_response(get_codec_config(platform))
+        
         else:
-            self.send_response(404)
-            self.end_headers()
+            self._json_error(404, "not_found")
     
     def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
@@ -61,161 +75,167 @@ class SignalingHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(body)
-        except json.JSONDecodeError:
+        except:
             data = {}
+        
+        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
         
         if self.path == '/register':
             peer_id = data.get('peer_id', '')
-            peer_ip = data.get('ip', self.client_address[0])
-            peer_port = data.get('port', 0)
+            platform = data.get('platform', 'unknown')
+            codec = data.get('codec', 'auto')
+            resolution = data.get('resolution', '1080p')
+            fps = data.get('fps', 30)
+            
             if peer_id:
                 peers[peer_id] = {
-                    'status': 'online', 
-                    'ip': peer_ip, 
-                    'port': peer_port,
-                    'last_seen': 'now'
+                    'platform': platform,
+                    'ip': client_ip,
+                    'port': data.get('port', 0),
+                    'codec': codec,
+                    'resolution': resolution,
+                    'fps': fps,
+                    'status': 'online',
+                    'registered_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'last_seen': time.time()
                 }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "status": "registered", 
+                
+                # вто-выбор кодека для платформы
+                codec_config = get_codec_config(platform)
+                
+                self._json_response({
+                    "status": "registered",
                     "peer_id": peer_id,
+                    "platform": platform,
+                    "codec_config": codec_config,
                     "peers": list(peers.keys()),
                     "count": len(peers)
-                }).encode())
-                print(f"Peer registered: {peer_id} (total: {len(peers)})")
-            else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "peer_id required"}).encode())
-        
-        elif self.path == '/offer':
-            target = data.get('target', '')
-            sdp = data.get('sdp', '')
-            from_peer = data.get('from', 'unknown')
-            if target and sdp:
-                offers[target] = {
-                    'from': from_peer, 
-                    'sdp': sdp, 
-                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
-                }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "status": "offer_sent", 
-                    "to": target,
-                    "from": from_peer
-                }).encode())
-                print(f"Offer from {from_peer} to {target}")
-            else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "target and sdp required"}).encode())
-        
-        elif self.path == '/answer':
-            target = data.get('target', '')
-            sdp = data.get('sdp', '')
-            from_peer = data.get('from', 'unknown')
-            if target and sdp:
-                answer_key = target + "_answer"
-                offers[answer_key] = {
-                    'from': from_peer, 
-                    'sdp': sdp,
-                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
-                }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "answer_sent"}).encode())
-                print(f"Answer from {from_peer} to {target}")
-            else:
-                self.send_response(400)
-                self.end_headers()
-        
-        elif self.path == '/connect':
-            # ачать relay сессию между двумя пирами
-            peer1 = data.get('peer1', '')
-            peer2 = data.get('peer2', '')
-            if peer1 in peers and peer2 in peers:
-                session_id = f"{peer1}_{peer2}_{int(time.time())}"
-                relay_connections[session_id] = {
-                    'peer1': peer1,
-                    'peer2': peer2,
-                    'status': 'active',
-                    'started': time.strftime('%Y-%m-%d %H:%M:%S')
-                }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "status": "connected",
-                    "session_id": session_id,
-                    "peer1": peer1,
-                    "peer2": peer2
-                }).encode())
-                print(f"Relay session started: {session_id}")
-            else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "peer not found"}).encode())
-        
-        elif self.path == '/relay':
-            # тправить данные через relay
-            target = data.get('target', '')
-            payload = data.get('data', '')
-            if target and payload:
-                # Сохраняем данные для получателя
-                if 'messages' not in peers.get(target, {}):
-                    if target not in peers:
-                        peers[target] = {}
-                    peers[target]['messages'] = []
-                peers[target]['messages'].append({
-                    'from': data.get('from', 'unknown'),
-                    'data': payload,
-                    'time': time.strftime('%H:%M:%S')
                 })
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "relayed"}).encode())
+                print(f"[+] {peer_id} ({platform}) registered. Total: {len(peers)}")
             else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "target and data required"}).encode())
+                self._json_error(400, "peer_id required")
         
-        elif self.path == '/messages':
-            # олучить сообщения для пира
+        elif self.path == '/start_stream':
+            # ачать стриминг экрана
+            source = data.get('source', '')
+            target = data.get('target', '')
+            quality = data.get('quality', 'auto')
+            
+            if source in peers and target in peers:
+                stream_id = f"stream_{source}_{target}_{int(time.time())}"
+                quality_config = get_quality_preset(quality)
+                
+                streams[stream_id] = {
+                    'id': stream_id,
+                    'source': source,
+                    'target': target,
+                    'codec': data.get('codec', 'h264'),
+                    'bitrate': quality_config['bitrate'],
+                    'fps': quality_config['fps'],
+                    'resolution': quality_config['resolution'],
+                    'started_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'status': 'active',
+                    'frames_sent': 0
+                }
+                
+                self._json_response({
+                    "status": "streaming",
+                    "stream_id": stream_id,
+                    "config": quality_config
+                })
+                print(f"[STREAM] {source} -> {target} ({quality_config['resolution']} @ {quality_config['fps']}fps)")
+            else:
+                self._json_error(404, "peer not found")
+        
+        elif self.path == '/send_frame':
+            # тправить кадр видео
+            stream_id = data.get('stream_id', '')
+            frame_data = data.get('frame', '')  # base64 encoded
+            frame_type = data.get('type', 'video')  # video/audio/input
+            target = data.get('target', '')
+            
+            if target and frame_data:
+                if target not in messages:
+                    messages[target] = []
+                
+                messages[target].append({
+                    'from': data.get('from', 'unknown'),
+                    'type': frame_type,
+                    'data': frame_data,
+                    'size': len(frame_data),
+                    'timestamp': time.time(),
+                    'stream_id': stream_id
+                })
+                
+                # бновляем счетчик кадров
+                if stream_id in streams:
+                    streams[stream_id]['frames_sent'] += 1
+                
+                self._json_response({"status": "sent", "size": len(frame_data)})
+            else:
+                self._json_error(400, "stream_id and frame required")
+        
+        elif self.path == '/get_frame':
+            # олучить кадр для отображения
+            peer_id = data.get('peer_id', '')
+            stream_id = data.get('stream_id', '')
+            
+            if peer_id in messages and messages[peer_id]:
+                frame = messages[peer_id].pop(0)
+                self._json_response(frame)
+            else:
+                self._json_response({"type": "empty"})
+        
+        elif self.path == '/stop_stream':
+            stream_id = data.get('stream_id', '')
+            if stream_id in streams:
+                streams[stream_id]['status'] = 'stopped'
+                streams[stream_id]['stopped_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+                self._json_response({"status": "stopped", "stream_id": stream_id})
+            else:
+                self._json_error(404, "stream not found")
+        
+        elif self.path == '/ping':
             peer_id = data.get('peer_id', '')
             if peer_id in peers:
-                messages = peers[peer_id].get('messages', [])
-                peers[peer_id]['messages'] = []  # чищаем
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"messages": messages}).encode())
+                peers[peer_id]['last_seen'] = time.time()
+                self._json_response({"status": "pong"})
             else:
-                self.send_response(404)
-                self.end_headers()
-        
-        elif self.path == '/unregister':
-            peer_id = data.get('peer_id', '')
-            if peer_id in peers:
-                del peers[peer_id]
-                print(f"Peer unregistered: {peer_id}")
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "unregistered"}).encode())
+                self._json_error(404, "peer not found")
         
         else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": "not_found"}).encode())
+            self._json_error(404, "not_found")
+    
+    def _json_response(self, data):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
+    
+    def _json_error(self, code, message):
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": message}).encode())
+    
+    def _count_platforms(self):
+        platforms = {}
+        for p in peers.values():
+            plat = p.get('platform', 'unknown')
+            platforms[plat] = platforms.get(plat, 0) + 1
+        return platforms
     
     def log_message(self, format, *args):
         pass
 
 port = int(os.environ.get('PORT', 10000))
-print(f"Nexus HTTP Signaling server on port {port}")
-HTTPServer(('0.0.0.0', port), SignalingHandler).serve_forever()
+print(f"""
+╔══════════════════════════════════════════════╗
+║     Nexus Remote Server v2.0                 ║
+║     Port: {port}                              ║
+║     Platforms: All                           ║
+╚══════════════════════════════════════════════╝
+""")
+HTTPServer(('0.0.0.0', port), NexusHandler).serve_forever()
