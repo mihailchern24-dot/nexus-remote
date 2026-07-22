@@ -4,10 +4,13 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import socket
 import struct
+import threading
 import os
+import time
 
 peers = {}  # peer_id -> {"status": "online", "ip": "...", "port": ...}
 offers = {}  # target -> {"from": ..., "sdp": ...}
+relay_connections = {}  # session_id -> {"peer1": ..., "peer2": ...}
 
 class SignalingHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -23,7 +26,10 @@ class SignalingHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(list(peers.keys())).encode())
+            self.wfile.write(json.dumps({
+                "peers": list(peers.keys()),
+                "count": len(peers)
+            }).encode())
         elif self.path.startswith('/offer/'):
             target = self.path.split('/')[-1]
             if target in offers:
@@ -35,6 +41,16 @@ class SignalingHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "no_offer"}).encode())
+        elif self.path == '/status':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "status": "running",
+                "peers": len(peers),
+                "offers": len(offers),
+                "sessions": len(relay_connections)
+            }).encode())
         else:
             self.send_response(404)
             self.end_headers()
@@ -65,7 +81,8 @@ class SignalingHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     "status": "registered", 
                     "peer_id": peer_id,
-                    "peers": list(peers.keys())
+                    "peers": list(peers.keys()),
+                    "count": len(peers)
                 }).encode())
                 print(f"Peer registered: {peer_id} (total: {len(peers)})")
             else:
@@ -78,11 +95,19 @@ class SignalingHandler(BaseHTTPRequestHandler):
             sdp = data.get('sdp', '')
             from_peer = data.get('from', 'unknown')
             if target and sdp:
-                offers[target] = {'from': from_peer, 'sdp': sdp, 'timestamp': 'now'}
+                offers[target] = {
+                    'from': from_peer, 
+                    'sdp': sdp, 
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+                }
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "offer_sent", "to": target}).encode())
+                self.wfile.write(json.dumps({
+                    "status": "offer_sent", 
+                    "to": target,
+                    "from": from_peer
+                }).encode())
                 print(f"Offer from {from_peer} to {target}")
             else:
                 self.send_response(400)
@@ -94,7 +119,12 @@ class SignalingHandler(BaseHTTPRequestHandler):
             sdp = data.get('sdp', '')
             from_peer = data.get('from', 'unknown')
             if target and sdp:
-                offers[target + "_answer"] = {'from': from_peer, 'sdp': sdp}
+                answer_key = target + "_answer"
+                offers[answer_key] = {
+                    'from': from_peer, 
+                    'sdp': sdp,
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+                }
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -104,32 +134,70 @@ class SignalingHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.end_headers()
         
-        elif self.path == '/relay':
-            # еренаправление данных через relay
-            target = data.get('target', '')
-            payload = data.get('data', '')
-            if target and target in peers and payload:
-                peer_info = peers[target]
-                try:
-                    relay_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    relay_sock.settimeout(5)
-                    relay_sock.connect(('127.0.0.1', 9000))
-                    # тправляем данные через relay
-                    relay_sock.send(payload.encode() if isinstance(payload, str) else payload)
-                    response = relay_sock.recv(4096)
-                    relay_sock.close()
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"status": "relayed", "response": response.decode('latin1')}).encode())
-                except Exception as e:
-                    self.send_response(500)
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"error": str(e)}).encode())
+        elif self.path == '/connect':
+            # ачать relay сессию между двумя пирами
+            peer1 = data.get('peer1', '')
+            peer2 = data.get('peer2', '')
+            if peer1 in peers and peer2 in peers:
+                session_id = f"{peer1}_{peer2}_{int(time.time())}"
+                relay_connections[session_id] = {
+                    'peer1': peer1,
+                    'peer2': peer2,
+                    'status': 'active',
+                    'started': time.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "connected",
+                    "session_id": session_id,
+                    "peer1": peer1,
+                    "peer2": peer2
+                }).encode())
+                print(f"Relay session started: {session_id}")
             else:
                 self.send_response(400)
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "target not found or no data"}).encode())
+                self.wfile.write(json.dumps({"error": "peer not found"}).encode())
+        
+        elif self.path == '/relay':
+            # тправить данные через relay
+            target = data.get('target', '')
+            payload = data.get('data', '')
+            if target and payload:
+                # Сохраняем данные для получателя
+                if 'messages' not in peers.get(target, {}):
+                    if target not in peers:
+                        peers[target] = {}
+                    peers[target]['messages'] = []
+                peers[target]['messages'].append({
+                    'from': data.get('from', 'unknown'),
+                    'data': payload,
+                    'time': time.strftime('%H:%M:%S')
+                })
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "relayed"}).encode())
+            else:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "target and data required"}).encode())
+        
+        elif self.path == '/messages':
+            # олучить сообщения для пира
+            peer_id = data.get('peer_id', '')
+            if peer_id in peers:
+                messages = peers[peer_id].get('messages', [])
+                peers[peer_id]['messages'] = []  # чищаем
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"messages": messages}).encode())
+            else:
+                self.send_response(404)
+                self.end_headers()
         
         elif self.path == '/unregister':
             peer_id = data.get('peer_id', '')
