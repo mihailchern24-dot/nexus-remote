@@ -231,7 +231,7 @@ static void client_thread(socket_t s) {
                     send_frame(s, "WOL_OK");
                 } else {
                     send_frame(s, "WOL_FAIL");
-                }`n            } else if (command == "UNREGISTER") {
+                }            } else if (command == "UNREGISTER") {
                 send_frame(s, "UNREGISTERED");
                 std::cout << "Peer unregistered: " << peer_id << "\n";
                 log_peers();
