@@ -182,6 +182,14 @@ std::string request = read_http_request(s);
 }
 
 static void client_thread(socket_t s) {
+    // HTTP health check for Render
+    char peek[4] = {};
+    if (recv(s, peek, 4, MSG_PEEK) >= 4 && peek[0] == char(71) && peek[1] == char(69) && peek[2] == char(84)) {
+        const char* ok = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nOK";
+        send(s, ok, (int)strlen(ok), 0);
+        close_socket(s);
+        return;
+    }
     std::string peer_id;
     if (!handshake_and_join(s, peer_id)) {
         close_socket(s);
