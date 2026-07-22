@@ -1,12 +1,13 @@
 ﻿#!/usr/bin/env python3
-# http_signaling.py - HTTP API для сигналинга Render
+# http_signaling.py - HTTP API для Nexus Remote на Render
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
-import sys
+import socket
+import struct
 import os
 
-peers = {}
-offers = {}
+peers = {}  # peer_id -> {"status": "online", "ip": "...", "port": ...}
+offers = {}  # target -> {"from": ..., "sdp": ...}
 
 class SignalingHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -24,7 +25,6 @@ class SignalingHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(list(peers.keys())).encode())
         elif self.path.startswith('/offer/'):
-            # GET /offer/peer_id - получить offer для пира
             target = self.path.split('/')[-1]
             if target in offers:
                 self.send_response(200)
@@ -50,12 +50,23 @@ class SignalingHandler(BaseHTTPRequestHandler):
         
         if self.path == '/register':
             peer_id = data.get('peer_id', '')
+            peer_ip = data.get('ip', self.client_address[0])
+            peer_port = data.get('port', 0)
             if peer_id:
-                peers[peer_id] = {'status': 'online', 'last_seen': 'now'}
+                peers[peer_id] = {
+                    'status': 'online', 
+                    'ip': peer_ip, 
+                    'port': peer_port,
+                    'last_seen': 'now'
+                }
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "registered", "peer_id": peer_id}).encode())
+                self.wfile.write(json.dumps({
+                    "status": "registered", 
+                    "peer_id": peer_id,
+                    "peers": list(peers.keys())
+                }).encode())
                 print(f"Peer registered: {peer_id} (total: {len(peers)})")
             else:
                 self.send_response(400)
@@ -77,6 +88,48 @@ class SignalingHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "target and sdp required"}).encode())
+        
+        elif self.path == '/answer':
+            target = data.get('target', '')
+            sdp = data.get('sdp', '')
+            from_peer = data.get('from', 'unknown')
+            if target and sdp:
+                offers[target + "_answer"] = {'from': from_peer, 'sdp': sdp}
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "answer_sent"}).encode())
+                print(f"Answer from {from_peer} to {target}")
+            else:
+                self.send_response(400)
+                self.end_headers()
+        
+        elif self.path == '/relay':
+            # еренаправление данных через relay
+            target = data.get('target', '')
+            payload = data.get('data', '')
+            if target and target in peers and payload:
+                peer_info = peers[target]
+                try:
+                    relay_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    relay_sock.settimeout(5)
+                    relay_sock.connect(('127.0.0.1', 9000))
+                    # тправляем данные через relay
+                    relay_sock.send(payload.encode() if isinstance(payload, str) else payload)
+                    response = relay_sock.recv(4096)
+                    relay_sock.close()
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "relayed", "response": response.decode('latin1')}).encode())
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode())
+            else:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "target not found or no data"}).encode())
         
         elif self.path == '/unregister':
             peer_id = data.get('peer_id', '')

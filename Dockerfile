@@ -5,7 +5,7 @@ WORKDIR /app/build
 RUN cmake .. -DBUILD_SHARED_LIBS=OFF
 RUN make signaling_server relay_server
 
-EXPOSE 10000 9000
+EXPOSE 10000 9000 8080
 
 # HTTP API на PORT, relay на 9000, signaling на 8080
 CMD python3 /app/http_signaling.py & ./relay_server 9000 & ./signaling_server 8080 & wait
