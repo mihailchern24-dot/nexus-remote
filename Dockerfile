@@ -7,4 +7,4 @@ RUN make signaling_server relay_server
 
 EXPOSE 10000 9000
 
-CMD python3 /app/health_server.py & ./relay_server 9000 & ./signaling_server 10000 & wait
+CMD python3 /app/health_server.py & ./relay_server 9000 & ./signaling_server 8080 & wait
