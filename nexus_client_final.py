@@ -1,6 +1,6 @@
-п»ї#!/usr/bin/env python3
+#!/usr/bin/env python3
 # nexus_client_final.py - Nexus Remote Client v4.0
-# QR-РєРѕРґ РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РІРІРѕРґР° РїР°СЂРѕР»СЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+# QR-код доступен только после ввода пароля устройства
 import requests
 import json
 import time
@@ -18,9 +18,10 @@ from tkinter import ttk, messagebox, scrolledtext, simpledialog
 from datetime import datetime
 from PIL import Image, ImageDraw
 import pyautogui
+from multi_monitor import MultiMonitorManager, MultiMonitorUI
 import qrcode
 
-# ==================== РљРћРќР¤РР“РЈР РђР¦РРЇ ====================
+# ==================== КОНФИГУРАЦИЯ ====================
 SERVER_URL = "https://nexus-remote.onrender.com"
 WEB_URL = "https://nexus-remote.onrender.com"
 COMPRESSION = "zstd"
@@ -159,11 +160,11 @@ class NexusUI:
         
         self.root.configure(bg=self.bg)
         
-        # РџРѕРєР°Р·С‹РІР°РµРј РѕРєРЅРѕ РІРІРѕРґР° РїР°СЂРѕР»СЏ РџР•Р Р•Р” РѕСЃРЅРѕРІРЅС‹Рј UI
+        # Показываем окно ввода пароля ПЕРЕД основным UI
         self.show_access_dialog()
     
     def show_access_dialog(self):
-        """РћРєРЅРѕ РІРІРѕРґР° РїР°СЂРѕР»СЏ РґР»СЏ РґРѕСЃС‚СѓРїР° Рє QR Рё С„СѓРЅРєС†РёСЏРј"""
+        """Окно ввода пароля для доступа к QR и функциям"""
         dialog = tk.Toplevel(self.root)
         dialog.title("Nexus Remote - Access Required")
         dialog.geometry("400x300")
@@ -172,20 +173,20 @@ class NexusUI:
         dialog.transient(self.root)
         dialog.grab_set()
         
-        # Р¦РµРЅС‚СЂРёСЂСѓРµРј
+        # Центрируем
         dialog.update_idletasks()
         x = (dialog.winfo_screenwidth() - 400) // 2
         y = (dialog.winfo_screenheight() - 300) // 2
         dialog.geometry(f"+{x}+{y}")
         
-        # РЎРѕРґРµСЂР¶РёРјРѕРµ
-        tk.Label(dialog, text="рџ”ђ Access Required", font=('Segoe UI', 16, 'bold'),
+        # Содержимое
+        tk.Label(dialog, text="?? Access Required", font=('Segoe UI', 16, 'bold'),
                 fg=self.accent, bg=self.bg).pack(pady=(30, 10))
         
         tk.Label(dialog, text="Enter device password to access QR code\nand connection features",
                 font=('Segoe UI', 10), fg=self.gray, bg=self.bg, justify=tk.CENTER).pack(pady=(0, 20))
         
-        # РРЅС„РѕСЂРјР°С†РёСЏ РѕР± СѓСЃС‚СЂРѕР№СЃС‚РІРµ
+        # Информация об устройстве
         info_frame = tk.Frame(dialog, bg=self.card, bd=0, highlightthickness=1, highlightbackground='#2a2a4a')
         info_frame.pack(fill=tk.X, padx=30, pady=(0, 10))
         
@@ -195,13 +196,13 @@ class NexusUI:
             tk.Label(row, text=f"{label}:", font=('Segoe UI', 9), fg=self.gray, bg=self.card).pack(side=tk.LEFT)
             tk.Label(row, text=value, font=('Segoe UI', 9, 'bold'), fg=self.text, bg=self.card).pack(side=tk.RIGHT)
         
-        # РџРѕР»Рµ РІРІРѕРґР° РїР°СЂРѕР»СЏ
+        # Поле ввода пароля
         pass_frame = tk.Frame(dialog, bg=self.bg)
         pass_frame.pack(fill=tk.X, padx=30, pady=(15, 10))
         
         pass_entry = tk.Entry(pass_frame, font=('Segoe UI', 14, 'bold'), bg='#0f0f1a', fg=self.text,
                              insertbackground=self.text, relief=tk.FLAT, bd=1, justify='center',
-                             show="в—Џ")
+                             show="?")
         pass_entry.pack(fill=tk.X, ipady=8)
         pass_entry.focus()
         
@@ -215,7 +216,7 @@ class NexusUI:
                 self.setup_ui()
                 threading.Thread(target=self.auto_register, daemon=True).start()
             else:
-                error_label.config(text="вќЊ Invalid code. Try again.")
+                error_label.config(text="? Invalid code. Try again.")
                 pass_entry.delete(0, tk.END)
         
         pass_entry.bind('<Return>', lambda e: verify())
@@ -225,33 +226,33 @@ class NexusUI:
                  relief=tk.FLAT, bd=0, padx=30, pady=10,
                  cursor='hand2', command=verify).pack(pady=(10, 0))
         
-        self.root.withdraw()  # РЎРєСЂС‹РІР°РµРј РѕСЃРЅРѕРІРЅРѕРµ РѕРєРЅРѕ
+        self.root.withdraw()  # Скрываем основное окно
     
     def setup_ui(self):
-        self.root.deiconify()  # РџРѕРєР°Р·С‹РІР°РµРј РѕСЃРЅРѕРІРЅРѕРµ РѕРєРЅРѕ
+        self.root.deiconify()  # Показываем основное окно
         
         main = tk.Frame(self.root, bg=self.bg)
         main.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
         
-        # Р—Р°РіРѕР»РѕРІРѕРє
+        # Заголовок
         header = tk.Frame(main, bg=self.bg)
         header.pack(fill=tk.X, pady=(0, 10))
         
-        tk.Label(header, text="вљЎ Nexus Remote", font=('Segoe UI', 22, 'bold'),
+        tk.Label(header, text="? Nexus Remote", font=('Segoe UI', 22, 'bold'),
                 fg=self.accent, bg=self.bg).pack(side=tk.LEFT)
         
-        # РљРЅРѕРїРєР° QR (РґРѕСЃС‚СѓРїРЅР° С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РІРІРѕРґР° РїР°СЂРѕР»СЏ)
-        self.btn(header, "рџ“· Show QR", self.accent, self.show_qr_code, 120, 30).pack(side=tk.RIGHT, padx=(5, 0))
-        self.btn(header, "рџ”ђ Security в†’", self.accent,
+        # Кнопка QR (доступна только после ввода пароля)
+        self.btn(header, "?? Show QR", self.accent, self.show_qr_code, 120, 30).pack(side=tk.RIGHT, padx=(5, 0))
+        self.btn(header, "?? Security >", self.accent,
                 lambda: os.startfile(WEB_URL) if sys.platform == 'win32' else None,
                 130, 30).pack(side=tk.RIGHT)
         
-        # РЎС‚Р°С‚СѓСЃ
+        # Статус
         self.status_label = tk.Label(main, text="Connecting...", font=('Segoe UI', 10),
                                      fg=self.gray, bg=self.bg)
         self.status_label.pack(anchor='w', pady=(0, 5))
         
-        # Р’РєР»Р°РґРєРё
+        # Вкладки
         nb = ttk.Notebook(main)
         nb.pack(fill=tk.BOTH, expand=True)
         
@@ -259,16 +260,16 @@ class NexusUI:
         self.create_devices_tab(nb)
         self.create_stats_tab(nb)
         
-        # РќРёР¶РЅСЏСЏ РїР°РЅРµР»СЊ
+        # Нижняя панель
         bar = tk.Frame(main, bg='#121226', height=30)
         bar.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
         bar.pack_propagate(False)
         
-        self.bar_dot = tk.Label(bar, text="в—Џ", font=('Segoe UI', 10), fg=self.gray, bg='#121226')
+        self.bar_dot = tk.Label(bar, text="?", font=('Segoe UI', 10), fg=self.gray, bg='#121226')
         self.bar_dot.pack(side=tk.LEFT, padx=(10, 4))
         self.bar_text = tk.Label(bar, text="Ready", font=('Segoe UI', 8), fg=self.gray, bg='#121226')
         self.bar_text.pack(side=tk.LEFT)
-        tk.Label(bar, text=f"рџ”’ Secured", font=('Segoe UI', 8), fg=self.green, bg='#121226').pack(side=tk.RIGHT, padx=10)
+        tk.Label(bar, text=f"?? Secured", font=('Segoe UI', 8), fg=self.green, bg='#121226').pack(side=tk.RIGHT, padx=10)
     
     def btn(self, parent, text, color, cmd, w=130, h=32):
         return tk.Button(parent, text=text, font=('Segoe UI', 9, 'bold'), bg=color, fg='white',
@@ -288,7 +289,7 @@ class NexusUI:
     
     def create_connect_tab(self, nb):
         tab = tk.Frame(nb, bg=self.bg)
-        nb.add(tab, text="  рџ”— Connect  ")
+        nb.add(tab, text="  ?? Connect  ")
         
         left = tk.Frame(tab, bg=self.bg)
         left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
@@ -296,7 +297,7 @@ class NexusUI:
         c2 = self.card_frame(left)
         c2.pack(fill=tk.X)
         
-        tk.Label(c2, text="рџ”— Connect to Device", font=('Segoe UI', 12, 'bold'),
+        tk.Label(c2, text="?? Connect to Device", font=('Segoe UI', 12, 'bold'),
                 fg=self.accent, bg=self.card).pack(anchor='w', padx=12, pady=(10, 5))
         
         conn = tk.Frame(c2, bg=self.card)
@@ -307,8 +308,8 @@ class NexusUI:
         
         btn_frame = tk.Frame(conn, bg=self.card)
         btn_frame.pack(fill=tk.X)
-        self.btn(btn_frame, "рџ”— Connect", self.green, self.do_connect, 120).pack(side=tk.LEFT, padx=(0, 5))
-        self.btn(btn_frame, "рџ“‹ Copy ID", self.gray, lambda: self.root.clipboard_append(self.client.peer_id), 100).pack(side=tk.LEFT)
+        self.btn(btn_frame, "?? Connect", self.green, self.do_connect, 120).pack(side=tk.LEFT, padx=(0, 5))
+        self.btn(btn_frame, "?? Copy ID", self.gray, lambda: self.root.clipboard_append(self.client.peer_id), 100).pack(side=tk.LEFT)
         
         right = tk.Frame(tab, bg=self.bg)
         right.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
@@ -316,7 +317,7 @@ class NexusUI:
         c3 = self.card_frame(right)
         c3.pack(fill=tk.X)
         
-        tk.Label(c3, text="рџ“є Capture", font=('Segoe UI', 12, 'bold'),
+        tk.Label(c3, text="?? Capture", font=('Segoe UI', 12, 'bold'),
                 fg=self.accent, bg=self.card).pack(anchor='w', padx=12, pady=(10, 5))
         
         self.conn_label = tk.Label(c3, text="Not connected", font=('Segoe UI', 9), fg=self.gray, bg=self.card)
@@ -324,24 +325,24 @@ class NexusUI:
         
         center = tk.Frame(c3, bg=self.card)
         center.pack(pady=15)
-        self.cap_btn = self.btn(center, "в–¶ Start Capture", self.green, self.toggle_capture, 180)
+        self.cap_btn = self.btn(center, "? Start Capture", self.green, self.toggle_capture, 180)
         self.cap_btn.pack()
         
-        self.cap_label = tk.Label(c3, text="в—Џ Ready", font=('Segoe UI', 9), fg=self.gray, bg=self.card)
+        self.cap_label = tk.Label(c3, text="? Ready", font=('Segoe UI', 9), fg=self.gray, bg=self.card)
         self.cap_label.pack(pady=(8, 10))
     
     def create_devices_tab(self, nb):
         tab = tk.Frame(nb, bg=self.bg)
-        nb.add(tab, text="  рџ’ѕ Devices  ")
+        nb.add(tab, text="  ?? Devices  ")
         
         c = self.card_frame(tab)
         c.pack(fill=tk.BOTH, expand=True)
         
         hdr = tk.Frame(c, bg=self.card)
         hdr.pack(fill=tk.X, padx=12, pady=(10, 8))
-        tk.Label(hdr, text="рџ’ѕ Saved Devices", font=('Segoe UI', 12, 'bold'),
+        tk.Label(hdr, text="?? Saved Devices", font=('Segoe UI', 12, 'bold'),
                 fg=self.accent, bg=self.card).pack(side=tk.LEFT)
-        self.btn(hdr, "рџ”„ Refresh", self.accent, self.refresh_devices, 100, 28).pack(side=tk.RIGHT)
+        self.btn(hdr, "?? Refresh", self.accent, self.refresh_devices, 100, 28).pack(side=tk.RIGHT)
         
         self.dev_list = tk.Frame(c, bg=self.card)
         self.dev_list.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
@@ -349,12 +350,12 @@ class NexusUI:
     
     def create_stats_tab(self, nb):
         tab = tk.Frame(nb, bg=self.bg)
-        nb.add(tab, text="  рџ“Љ Stats  ")
+        nb.add(tab, text="  ?? Stats  ")
         
         c = self.card_frame(tab)
         c.pack(fill=tk.BOTH, expand=True)
         
-        tk.Label(c, text="рџ“Љ Statistics", font=('Segoe UI', 12, 'bold'),
+        tk.Label(c, text="?? Statistics", font=('Segoe UI', 12, 'bold'),
                 fg=self.accent, bg=self.card).pack(anchor='w', padx=12, pady=(10, 5))
         
         self.stats_text = scrolledtext.ScrolledText(c, height=20, font=('Consolas', 9),
@@ -363,9 +364,9 @@ class NexusUI:
         
         self.btn(c, "Refresh", self.accent, self.refresh_stats, 100, 30).pack(pady=(0, 8))
     
-    # ==================== QR CODE (Р—РђР©РР©Р•Рќ) ====================
+    # ==================== QR CODE (ЗАЩИЩЕН) ====================
     def show_qr_code(self):
-        """РџРѕРєР°Р·Р°С‚СЊ QR-РєРѕРґ (РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РІРІРѕРґР° РїР°СЂРѕР»СЏ)"""
+        """Показать QR-код (доступен только после ввода пароля)"""
         qr_data = self.client.generate_qr_data()
         
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
@@ -377,15 +378,15 @@ class NexusUI:
         img.save(qr_path)
         
         top = tk.Toplevel(self.root)
-        top.title("рџ“· Nexus Remote - QR Code")
+        top.title("?? Nexus Remote - QR Code")
         top.geometry("380x500")
         top.configure(bg=self.bg)
         top.resizable(False, False)
         
-        tk.Label(top, text="рџ“· Scan to Connect", font=('Segoe UI', 14, 'bold'),
+        tk.Label(top, text="?? Scan to Connect", font=('Segoe UI', 14, 'bold'),
                 fg=self.accent, bg=self.bg).pack(pady=(20, 5))
         
-        tk.Label(top, text="рџ”’ QR protected by password", font=('Segoe UI', 9),
+        tk.Label(top, text="?? QR protected by password", font=('Segoe UI', 9),
                 fg=self.green, bg=self.bg).pack(pady=(0, 15))
         
         photo = tk.PhotoImage(file=qr_path)
@@ -393,14 +394,14 @@ class NexusUI:
         qr_label.pack(pady=5)
         top.image = photo
         
-        # РРЅС„РѕСЂРјР°С†РёСЏ
+        # Информация
         info_card = tk.Frame(top, bg=self.card, bd=0, highlightthickness=1, highlightbackground='#2a2a4a')
         info_card.pack(fill=tk.X, padx=20, pady=15)
         
         for label, value in [
             ("Device ID", self.client.device_id),
             ("Peer ID", self.client.peer_id[:24] + "..."),
-            ("Access Code", "вЂў" * 8 + " (hidden)")
+            ("Access Code", "•" * 8 + " (hidden)")
         ]:
             row = tk.Frame(info_card, bg=self.card)
             row.pack(fill=tk.X, padx=15, pady=3)
@@ -412,14 +413,14 @@ class NexusUI:
         
         self.btn(top, "Close", self.accent, top.destroy, 100, 30).pack(pady=(0, 15))
     
-    # ==================== Р¤РЈРќРљР¦РР ====================
+    # ==================== ФУНКЦИИ ====================
     def auto_register(self):
         time.sleep(1)
         if self.client.register():
-            self.status_label.config(text="вњ… Connected to server", fg=self.green)
+            self.status_label.config(text="? Connected to server", fg=self.green)
             self.bar_dot.config(fg=self.green)
         else:
-            self.status_label.config(text="вќЊ Server offline", fg=self.red)
+            self.status_label.config(text="? Server offline", fg=self.red)
     
     def do_connect(self):
         peer = self.peer_entry.get().strip()
@@ -438,15 +439,15 @@ class NexusUI:
             if not self.client.connected_peer:
                 return messagebox.showwarning("Error", "Connect first")
             self.client.capturing = True
-            self.cap_btn.config(text="вЏ№ Stop", bg=self.red)
-            self.cap_label.config(text="в—Џ Capturing...", fg=self.orange)
+            self.cap_btn.config(text="? Stop", bg=self.red)
+            self.cap_label.config(text="? Capturing...", fg=self.orange)
             self.bar_dot.config(fg=self.orange)
             threading.Thread(target=self.capture_loop, daemon=True).start()
         else:
             self.client.capturing = False
             self.client.stop_stream()
-            self.cap_btn.config(text="в–¶ Start Capture", bg=self.green)
-            self.cap_label.config(text="в—Џ Ready", fg=self.gray)
+            self.cap_btn.config(text="? Start Capture", bg=self.green)
+            self.cap_label.config(text="? Ready", fg=self.gray)
             self.bar_dot.config(fg=self.green)
     
     def capture_loop(self):
@@ -476,9 +477,9 @@ class NexusUI:
             tk.Label(row, text=last[:16] if last else "Never", font=('Segoe UI', 8), fg=self.gray, bg='#1e1e38', width=16).pack(side=tk.LEFT, padx=4, pady=6)
             btn_f = tk.Frame(row, bg='#1e1e38')
             btn_f.pack(side=tk.RIGHT, padx=8)
-            self.btn(btn_f, "в–¶", self.green, lambda p=peer_id: self.quick_connect(p), 28, 24).pack(side=tk.LEFT, padx=1)
-            self.btn(btn_f, "вњЏпёЏ", self.accent, lambda p=peer_id, n=name: self.rename_dev(p, n or p), 28, 24).pack(side=tk.LEFT, padx=1)
-            self.btn(btn_f, "вњ•", self.red, lambda p=peer_id: self.remove_dev(p), 28, 24).pack(side=tk.LEFT, padx=1)
+            self.btn(btn_f, "?", self.green, lambda p=peer_id: self.quick_connect(p), 28, 24).pack(side=tk.LEFT, padx=1)
+            self.btn(btn_f, "??", self.accent, lambda p=peer_id, n=name: self.rename_dev(p, n or p), 28, 24).pack(side=tk.LEFT, padx=1)
+            self.btn(btn_f, "?", self.red, lambda p=peer_id: self.remove_dev(p), 28, 24).pack(side=tk.LEFT, padx=1)
     
     def quick_connect(self, peer_id):
         ok, msg = self.client.start_stream(peer_id)
@@ -520,3 +521,4 @@ class NexusUI:
 if __name__ == "__main__":
     app = NexusUI()
     app.run()
+

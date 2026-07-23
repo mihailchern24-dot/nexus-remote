@@ -86,6 +86,7 @@ class AuthHandler(BaseHTTPRequestHandler):
             '/blog': 'blog.html',
             '/support': 'support.html',
             '/forum': 'forum.html',
+            '/wake': 'wake_stream.html',
         }
         
         if self.path in pages:
@@ -146,3 +147,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     print(f"Nexus Remote Auth Server on port {port}")
     HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
+
