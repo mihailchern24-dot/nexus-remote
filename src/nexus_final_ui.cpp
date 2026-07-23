@@ -15,7 +15,7 @@ using std::min;
 // ==================== GLOBALS ====================
 std::string g_server = "nexus-remote.onrender.com";
 std::string g_token, g_peer_id, g_email;
-bool g_streaming = false, g_connected = false;
+bool g_streaming = false, g_connected = false, g_gamepad_visible = true;
 int g_tab = 0;
 std::wstring g_user = L"demo@nexus.com";
 std::wstring g_peer = L"nexus-129025594271";
@@ -110,7 +110,7 @@ void DrawCard(Graphics& g, int x, int y, int w, int h) {
     Pen p(Color(42,42,74), 1); g.DrawRectangle(&p, x, y, w, h);
 }
 
-const wchar_t* g_tabs[] = {L"Connect", L"Devices", L"Chat", L"Stats", L"WOL", L"About"};
+const wchar_t* g_tabs[] = {L"Connect", L"Devices", L"Chat", L"Stats", L"WOL", L"Gamepad"};
 const int g_tc = 6;
 
 void DrawAll(Graphics& g, int w, int h) {
@@ -273,3 +273,4 @@ int WINAPI WinMain(HINSTANCE i,HINSTANCE,LPSTR,int c){
     MSG m;while(GetMessageA(&m,0,0,0)){TranslateMessage(&m);DispatchMessageA(&m);}
     WSACleanup();GdiplusShutdown(t);return 0;
 }
+
