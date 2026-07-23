@@ -1,547 +1,339 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Gamepad Ultimate</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
-        body { font-family:'Segoe UI',sans-serif; background:transparent; overflow:hidden; touch-action:manipulation; position:fixed; top:0;left:0;right:0;bottom:0; }
-        
-        .settings-panel {
-            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-            background:rgba(10,10,26,0.97); border:1px solid #2a2a4a; border-radius:20px;
-            padding:24px; width:92vw; max-width:420px; max-height:85vh; overflow-y:auto;
-            z-index:10001; display:none; backdrop-filter:blur(20px); color:#e0e0e0;
-        }
-        .settings-panel.show { display:block; }
-        .settings-panel h2 { color:#6366f1; font-size:20px; margin-bottom:20px; text-align:center; }
-        .settings-panel h3 { color:#888; font-size:12px; margin:16px 0 10px; text-transform:uppercase; letter-spacing:2px; border-bottom:1px solid #1a1a3e; padding-bottom:6px; }
-        
-        .setting-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; gap:10px; }
-        .setting-row label { color:#ccc; font-size:11px; min-width:70px; }
-        .setting-row select, .setting-row input { 
-            background:#0a0a1a; color:#fff; border:1px solid #2a2a4a; border-radius:8px; 
-            padding:8px 10px; font-size:12px; flex:1; max-width:160px;
-        }
-        .setting-row select { cursor:pointer; }
-        .setting-row select:focus, .setting-row input:focus { outline:none; border-color:#6366f1; }
-        .setting-row input[type=range] { accent-color:#6366f1; max-width:120px; }
-        .setting-row input[type=checkbox] { accent-color:#6366f1; width:18px; height:18px; flex:none; }
-        .setting-row input[type=color] { width:40px; height:30px; border-radius:6px; padding:2px; flex:none; cursor:pointer; }
-        
-        .btn-row { display:flex; gap:8px; margin-top:20px; }
-        .btn { flex:1; padding:12px; border-radius:10px; border:none; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
-        .btn-save { background:#6366f1; color:#fff; }
-        .btn-save:hover { background:#5558e6; }
-        .btn-add { background:#22c55e; color:#fff; }
-        .btn-add:hover { background:#16a34a; }
-        .btn-del { background:#ef4444; color:#fff; }
-        .btn-close { background:transparent; border:2px solid #2a2a4a; color:#888; }
-        
-        .icon-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
-        .icon-item { 
-            aspect-ratio:1; border-radius:12px; border:2px solid transparent; cursor:pointer;
-            display:flex; align-items:center; justify-content:center; font-size:24px;
-            background:#0a0a1a; transition:all 0.2s;
-        }
-        .icon-item:hover, .icon-item.selected { border-color:#6366f1; background:rgba(99,102,241,0.15); }
-        .icon-item img { width:70%; height:70%; object-fit:contain; }
-        
-        .gpad-btn {
-            position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center;
-            cursor:pointer; transition:all 0.1s; pointer-events:auto; z-index:9999;
-            background-size:65%; background-repeat:no-repeat; background-position:center;
-            border:2px solid rgba(99,102,241,0.4); background-color:rgba(21,21,48,0.8);
-            color:#e0e0e0; font-weight:bold; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
-        }
-        .gpad-btn:active, .gpad-btn.pressed { background-color:rgba(99,102,241,0.6); border-color:#818cf8; transform:scale(0.85); box-shadow:0 0 20px rgba(99,102,241,0.5); }
-        .gpad-btn[data-type=stick] { border-radius:50%; background-color:rgba(21,21,48,0.5); }
-        .gpad-btn[data-type=stick] .stick-inner {
-            width:45%; height:45%; border-radius:50%; background:rgba(99,102,241,0.7);
-            position:absolute; transition:all 0.05s; border:2px solid #818cf8;
-        }
-        
-        .edit-indicator {
-            position:absolute; top:-8px; right:-8px; width:22px; height:22px;
-            border-radius:50%; background:#6366f1; color:#fff; font-size:10px;
-            display:flex; align-items:center; justify-content:center; z-index:1;
-        }
-        
-        .mouse-area {
-            position:absolute; border:1px dashed rgba(255,255,255,0.08); border-radius:12px;
-            pointer-events:auto; z-index:9998;
-        }
-        
-        .toolbar { position:fixed; top:10px; right:10px; display:flex; gap:6px; z-index:10002; }
-        .tbtn {
-            width:38px; height:38px; border-radius:50%; border:1px solid rgba(99,102,241,0.3);
-            background:rgba(21,21,48,0.85); color:#888; font-size:16px; cursor:pointer;
-            display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);
-        }
-        .tbtn.active { background:rgba(99,102,241,0.5); color:#fff; border-color:#818cf8; }
-        
-        .toast {
-            position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-            background:rgba(99,102,241,0.9); color:#fff; padding:10px 24px;
-            border-radius:20px; font-size:12px; z-index:10003; pointer-events:none;
-        }
-        
-        .preset-list { display:flex; gap:6px; flex-wrap:wrap; }
-        .preset-item {
-            padding:6px 12px; border-radius:16px; font-size:10px; cursor:pointer;
-            border:1px solid #2a2a4a; color:#888; background:#0a0a1a;
-        }
-        .preset-item:hover, .preset-item.active { border-color:#6366f1; color:#fff; background:rgba(99,102,241,0.15); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Nexus Gamepad</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:Arial,sans-serif; background:rgba(0,0,0,0.3); overflow:hidden; touch-action:manipulation; position:fixed; top:0;left:0;right:0;bottom:0; }
+
+/* SETTINGS PANEL */
+#settingsPanel {
+    position:fixed; top:5%; left:5%; right:5%; bottom:5%;
+    background:rgba(10,10,26,0.97); border:2px solid #6366f1; border-radius:20px;
+    padding:20px; z-index:99999; display:none; overflow-y:auto; color:#fff;
+}
+#settingsPanel.show { display:block !important; }
+
+#settingsPanel h2 { color:#6366f1; text-align:center; margin-bottom:15px; font-size:18px; }
+#settingsPanel h3 { color:#888; font-size:12px; margin:12px 0 8px; border-bottom:1px solid #1a1a3e; padding-bottom:5px; }
+
+.row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; gap:8px; }
+.row label { color:#ccc; font-size:11px; min-width:60px; }
+.row select, .row input { background:#0a0a1a; color:#fff; border:1px solid #2a2a4a; border-radius:6px; padding:6px 8px; font-size:11px; flex:1; }
+.row input[type=range] { accent-color:#6366f1; }
+.row input[type=color] { width:35px; height:30px; padding:2px; flex:none; }
+
+.btn { padding:10px; border-radius:8px; border:none; font-size:12px; font-weight:bold; cursor:pointer; margin:3px; }
+.btn-blue { background:#6366f1; color:#fff; }
+.btn-green { background:#22c55e; color:#fff; }
+.btn-red { background:#ef4444; color:#fff; }
+.btn-gray { background:transparent; border:1px solid #2a2a4a; color:#888; }
+
+/* TOOLBAR */
+#toolbar { position:fixed; top:10px; right:10px; z-index:99998; display:flex; gap:6px; }
+.tbtn { width:40px; height:40px; border-radius:50%; border:2px solid #6366f1; background:rgba(21,21,48,0.9); color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+/* GAMEPAD BUTTONS */
+.gbtn {
+    position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; border:2px solid rgba(99,102,241,0.5); background:rgba(21,21,48,0.8);
+    color:#fff; font-weight:bold; font-size:14px; z-index:9999; pointer-events:auto;
+}
+.gbtn:active { background:rgba(99,102,241,0.7); transform:scale(0.85); }
+.gbtn .stick-inner { width:40%; height:40%; border-radius:50%; background:rgba(99,102,241,0.7); position:absolute; }
+
+.mouse-area { position:absolute; border:2px dashed rgba(255,255,255,0.1); border-radius:12px; z-index:9998; }
+</style>
 </head>
 <body>
-    <!-- SETTINGS PANEL -->
-    <div class="settings-panel" id="panel">
-        <h2>⚙️ Gamepad Editor</h2>
-        
-        <h3>🎯 Select Element</h3>
-        <select id="elemSelect" onchange="selectElement()" style="width:100%;padding:10px;border-radius:8px;background:#0a0a1a;color:#fff;border:1px solid #2a2a4a;font-size:13px;">
-            <option value="">-- Choose button/stick to edit --</option>
-        </select>
-        
-        <div id="elemSettings" style="display:none">
-            <h3>⌨️ Key Mapping</h3>
-            <div class="setting-row"><label>Type</label><select id="elemType" onchange="onTypeChange()"><option value="button">Button</option><option value="stick">Joystick</option></select></div>
-            
-            <div id="buttonMapping">
-                <div class="setting-row"><label>Action</label><select id="btnKey"><option value="">-- Select Key --</option></select></div>
-            </div>
-            
-            <div id="stickMapping" style="display:none">
-                <div class="setting-row"><label>Up</label><select class="stick-key" data-dir="up"></select></div>
-                <div class="setting-row"><label>Down</label><select class="stick-key" data-dir="down"></select></div>
-                <div class="setting-row"><label>Left</label><select class="stick-key" data-dir="left"></select></div>
-                <div class="setting-row"><label>Right</label><select class="stick-key" data-dir="right"></select></div>
-            </div>
-            
-            <h3>🎨 Appearance</h3>
-            <div class="setting-row"><label>Label</label><input type="text" id="elemLabel" placeholder="A" maxlength="4"></div>
-            <div class="setting-row"><label>Color</label><input type="color" id="elemColor" value="#6366f1"></div>
-            <div class="setting-row"><label>Size</label><input type="range" id="elemSize" min="40" max="200" value="60" oninput="document.getElementById('sizeVal').textContent=this.value"><span id="sizeVal" style="color:#888;font-size:11px">60</span></div>
-            
-            <h3>🖼 Icon</h3>
-            <div class="icon-grid" id="iconGrid"></div>
-            <div class="setting-row" style="margin-top:8px"><label>Custom URL</label><input type="text" id="customIcon" placeholder="https://..."></div>
-            
-            <div class="btn-row">
-                <button class="btn btn-del" onclick="deleteElement()">🗑 Delete</button>
-                <button class="btn btn-save" onclick="applyElement()">✅ Apply</button>
-            </div>
-        </div>
-        
-        <h3>🖱 Mouse Area</h3>
-        <div class="setting-row"><label>Show</label><input type="checkbox" id="mouseShow" checked onchange="applySettings()"></div>
-        <div class="setting-row"><label>Sensitivity</label><input type="range" id="mouseSens" min="5" max="50" value="15" oninput="applySettings()"></div>
-        
-        <h3>📋 Presets</h3>
-        <div class="preset-list">
-            <div class="preset-item active" onclick="loadPreset('default')">Default</div>
-            <div class="preset-item" onclick="loadPreset('fps')">FPS</div>
-            <div class="preset-item" onclick="loadPreset('racing')">Racing</div>
-            <div class="preset-item" onclick="loadPreset('rpg')">RPG</div>
-            <div class="preset-item" onclick="loadPreset('minimal')">Minimal</div>
-        </div>
-        
-        <div class="btn-row">
-            <button class="btn btn-add" onclick="addElement()">➕ Add Button</button>
-            <button class="btn btn-add" onclick="addStick()">🕹 Add Stick</button>
-            <button class="btn btn-save" onclick="saveAll()">💾 Save All</button>
-            <button class="btn btn-close" onclick="togglePanel()">✕ Close</button>
-        </div>
-    </div>
-    
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-        <button class="tbtn" onclick="togglePanel()" title="Settings">⚙️</button>
-        <button class="tbtn" onclick="toggleVisibility()" title="Show/Hide">👁</button>
-        <button class="tbtn" id="editBtn" onclick="toggleEdit()" title="Edit Layout">✋</button>
-        <button class="tbtn" onclick="resetAll()" title="Reset">↺</button>
-    </div>
-    
-    <!-- MOUSE AREA -->
-    <div class="mouse-area" id="mouseArea"></div>
-    
-    <!-- GAMEPAD CONTAINER -->
-    <div id="gamepadContainer" style="position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;"></div>
 
-    <script>
-        // ==================== DATA ====================
-        const KEY_OPTIONS = [
-            {v:'',l:'-- Select Key --'},
-            {v:'ArrowUp',l:'⬆ Arrow Up'},{v:'ArrowDown',l:'⬇ Arrow Down'},{v:'ArrowLeft',l:'⬅ Arrow Left'},{v:'ArrowRight',l:'➡ Arrow Right'},
-            {v:'Enter',l:'↵ Enter'},{v:'Escape',l:'⎋ Escape'},{v:'Space',l:'␣ Space'},{v:'Tab',l:'⇥ Tab'},
-            {v:'Shift',l:'⇧ Shift'},{v:'Ctrl',l:'⌃ Ctrl'},{v:'Alt',l:'⌥ Alt'},
-            {v:'KeyA',l:'A'},{v:'KeyB',l:'B'},{v:'KeyC',l:'C'},{v:'KeyD',l:'D'},{v:'KeyE',l:'E'},{v:'KeyF',l:'F'},
-            {v:'KeyG',l:'G'},{v:'KeyH',l:'H'},{v:'KeyI',l:'I'},{v:'KeyJ',l:'J'},{v:'KeyK',l:'K'},{v:'KeyL',l:'L'},
-            {v:'KeyM',l:'M'},{v:'KeyN',l:'N'},{v:'KeyO',l:'O'},{v:'KeyP',l:'P'},{v:'KeyQ',l:'Q'},{v:'KeyR',l:'R'},
-            {v:'KeyS',l:'S'},{v:'KeyT',l:'T'},{v:'KeyU',l:'U'},{v:'KeyV',l:'V'},{v:'KeyW',l:'W'},{v:'KeyX',l:'X'},
-            {v:'KeyY',l:'Y'},{v:'KeyZ',l:'Z'},
-            {v:'Digit0',l:'0'},{v:'Digit1',l:'1'},{v:'Digit2',l:'2'},{v:'Digit3',l:'3'},{v:'Digit4',l:'4'},
-            {v:'Digit5',l:'5'},{v:'Digit6',l:'6'},{v:'Digit7',l:'7'},{v:'Digit8',l:'8'},{v:'Digit9',l:'9'},
-            {v:'F1',l:'F1'},{v:'F2',l:'F2'},{v:'F3',l:'F3'},{v:'F4',l:'F4'},{v:'F5',l:'F5'},{v:'F6',l:'F6'},
-            {v:'F7',l:'F7'},{v:'F8',l:'F8'},{v:'F9',l:'F9'},{v:'F10',l:'F10'},{v:'F11',l:'F11'},{v:'F12',l:'F12'},
-            {v:'MouseLeft',l:'🖱 Left Click'},{v:'MouseRight',l:'🖱 Right Click'},{v:'MouseMiddle',l:'🖱 Middle Click'},
-        ];
+<!-- TOOLBAR -->
+<div id="toolbar">
+    <button class="tbtn" onclick="openSettings()" title="Settings">⚙️</button>
+    <button class="tbtn" onclick="toggleGamepad()" title="Show/Hide">👁</button>
+    <button class="tbtn" id="editBtn" onclick="toggleEdit()" title="Edit Mode">✋</button>
+    <button class="tbtn" onclick="resetAll()" title="Reset">↺</button>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="settingsPanel">
+    <h2>⚙️ Gamepad Settings</h2>
+    
+    <h3>Select Element</h3>
+    <select id="elemSelect" onchange="selectElement()" style="width:100%;padding:8px;border-radius:6px;background:#0a0a1a;color:#fff;border:1px solid #2a2a4a;">
+        <option value="">-- Choose --</option>
+    </select>
+    
+    <div id="elemSettings" style="display:none">
+        <h3>Key Mapping</h3>
+        <div class="row"><label>Type</label><select id="elemType" onchange="onTypeChange()"><option value="button">Button</option><option value="stick">Joystick</option></select></div>
         
-        const ICONS = [
-            {v:'',l:'None'},{v:'🎮',l:'🎮 Gamepad'},{v:'🕹',l:'🕹 Stick'},{v:'🎯',l:'🎯 Target'},
-            {v:'⚔️',l:'⚔️ Sword'},{v:'🛡',l:'🛡 Shield'},{v:'🏹',l:'🏹 Bow'},{v:'💣',l:'💣 Bomb'},
-            {v:'🚗',l:'🚗 Car'},{v:'✈️',l:'✈️ Plane'},{v:'🏃',l:'🏃 Run'},{v:'🦘',l:'🦘 Jump'},
-            {v:'👆',l:'👆 Tap'},{v:'✊',l:'✊ Punch'},{v:'🔄',l:'🔄 Reload'},{v:'💊',l:'💊 Heal'},
-            {v:'🗡',l:'🗡 Dagger'},{v:'🔫',l:'🔫 Gun'},{v:'🏈',l:'🏈 Ball'},{v:'⚡',l:'⚡ Lightning'},
-            {v:'❌',l:'❌ Close'},{v:'✅',l:'✅ Confirm'},{v:'🔙',l:'🔙 Back'},{v:'📋',l:'📋 Menu'},
-        ];
+        <div id="btnMapping">
+            <div class="row"><label>Key</label><select id="btnKey"></select></div>
+        </div>
+        <div id="stickMapping" style="display:none">
+            <div class="row"><label>Up</label><select id="stickUp"></select></div>
+            <div class="row"><label>Down</label><select id="stickDown"></select></div>
+            <div class="row"><label>Left</label><select id="stickLeft"></select></div>
+            <div class="row"><label>Right</label><select id="stickRight"></select></div>
+        </div>
         
-        const PRESETS = {
-            default: {
-                elements: [
-                    {id:'btn_a',type:'button',x:80,y:55,w:55,h:55,key:'Enter',label:'A',color:'#22c55e',icon:''},
-                    {id:'btn_b',type:'button',x:88,y:45,w:55,h:55,key:'Escape',label:'B',color:'#ef4444',icon:''},
-                    {id:'btn_x',type:'button',x:72,y:45,w:55,h:55,key:'Space',label:'X',color:'#3b82f6',icon:''},
-                    {id:'btn_y',type:'button',x:80,y:35,w:55,h:55,key:'Tab',label:'Y',color:'#f59e0b',icon:''},
-                    {id:'dpad_u',type:'button',x:15,y:45,w:40,h:40,key:'ArrowUp',label:'▲',color:'#6366f1',icon:''},
-                    {id:'dpad_d',type:'button',x:15,y:65,w:40,h:40,key:'ArrowDown',label:'▼',color:'#6366f1',icon:''},
-                    {id:'dpad_l',type:'button',x:8,y:55,w:40,h:40,key:'ArrowLeft',label:'◄',color:'#6366f1',icon:''},
-                    {id:'dpad_r',type:'button',x:22,y:55,w:40,h:40,key:'ArrowRight',label:'►',color:'#6366f1',icon:''},
-                    {id:'lb',type:'button',x:5,y:20,w:60,h:28,key:'Shift',label:'LB',color:'#6366f1',icon:''},
-                    {id:'rb',type:'button',x:75,y:20,w:60,h:28,key:'Ctrl',label:'RB',color:'#6366f1',icon:''},
-                    {id:'lt',type:'button',x:2,y:8,w:55,h:25,key:'MouseLeft',label:'LT',color:'#6366f1',icon:''},
-                    {id:'rt',type:'button',x:80,y:8,w:55,h:25,key:'MouseRight',label:'RT',color:'#6366f1',icon:''},
-                ]
-            },
-            fps: {
-                elements: [
-                    {id:'stick_l',type:'stick',x:20,y:55,w:90,h:90,keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},label:'',color:'#6366f1',icon:'🎯'},
-                    {id:'shoot',type:'button',x:80,y:50,w:60,h:60,key:'MouseLeft',label:'🔫',color:'#ef4444',icon:''},
-                    {id:'aim',type:'button',x:70,y:65,w:50,h:50,key:'MouseRight',label:'🎯',color:'#3b82f6',icon:''},
-                    {id:'reload',type:'button',x:70,y:35,w:45,h:45,key:'KeyR',label:'🔄',color:'#f59e0b',icon:''},
-                    {id:'jump',type:'button',x:15,y:75,w:45,h:45,key:'Space',label:'🦘',color:'#22c55e',icon:''},
-                ]
-            },
-            racing: {
-                elements: [
-                    {id:'stick_l',type:'stick',x:15,y:55,w:80,h:80,keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},label:'',color:'#6366f1',icon:'🚗'},
-                    {id:'brake',type:'button',x:85,y:65,w:50,h:50,key:'Space',label:'🛑',color:'#ef4444',icon:''},
-                    {id:'boost',type:'button',x:85,y:35,w:50,h:50,key:'Shift',label:'⚡',color:'#f59e0b',icon:''},
-                ]
-            },
+        <h3>Appearance</h3>
+        <div class="row"><label>Label</label><input type="text" id="elemLabel" placeholder="A" maxlength="4"></div>
+        <div class="row"><label>Color</label><input type="color" id="elemColor" value="#6366f1"></div>
+        <div class="row"><label>Size</label><input type="range" id="elemSize" min="40" max="200" value="60" oninput="document.getElementById('sizeVal').textContent=this.value"><span id="sizeVal">60</span></div>
+        
+        <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap">
+            <button class="btn btn-blue" onclick="applyElement()">✅ Apply</button>
+            <button class="btn btn-red" onclick="deleteElement()">🗑 Delete</button>
+            <button class="btn btn-gray" onclick="closeSettings()">Close</button>
+        </div>
+    </div>
+    
+    <h3>Add Elements</h3>
+    <button class="btn btn-green" onclick="addButton()">➕ Add Button</button>
+    <button class="btn btn-blue" onclick="addStick()">🕹 Add Stick</button>
+    
+    <h3>Mouse Area</h3>
+    <div class="row"><label>Show</label><input type="checkbox" id="mouseShow" checked onchange="toggleMouse()"></div>
+    <div class="row"><label>Sensitivity</label><input type="range" id="mouseSens" min="5" max="50" value="15"></div>
+    
+    <button class="btn btn-blue" style="width:100%;margin-top:10px" onclick="saveAll()">💾 Save All & Close</button>
+</div>
+
+<!-- MOUSE AREA -->
+<div class="mouse-area" id="mouseArea"></div>
+
+<!-- GAMEPAD -->
+<div id="gamepadContainer" style="position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9997;"></div>
+
+<script>
+// ==================== DATA ====================
+const KEYS = [
+    {v:'',l:'-- Select --'},{v:'ArrowUp',l:'⬆ Up'},{v:'ArrowDown',l:'⬇ Down'},{v:'ArrowLeft',l:'⬅ Left'},{v:'ArrowRight',l:'➡ Right'},
+    {v:'Enter',l:'Enter'},{v:'Escape',l:'Escape'},{v:'Space',l:'Space'},{v:'Tab',l:'Tab'},
+    {v:'Shift',l:'Shift'},{v:'Ctrl',l:'Ctrl'},{v:'Alt',l:'Alt'},
+    {v:'KeyW',l:'W'},{v:'KeyA',l:'A'},{v:'KeyS',l:'S'},{v:'KeyD',l:'D'},
+    {v:'KeyQ',l:'Q'},{v:'KeyE',l:'E'},{v:'KeyR',l:'R'},{v:'KeyF',l:'F'},
+    {v:'Digit1',l:'1'},{v:'Digit2',l:'2'},{v:'Digit3',l:'3'},{v:'Digit4',l:'4'},{v:'Digit5',l:'5'},
+    {v:'MouseLeft',l:'🖱 Left Click'},{v:'MouseRight',l:'🖱 Right Click'},
+];
+
+let elements = [];
+let editMode = false;
+let selectedId = null;
+
+// Load saved
+try {
+    const saved = localStorage.getItem('nexus_gpad');
+    if (saved) elements = JSON.parse(saved);
+} catch(e) {}
+
+// Default elements
+if (!elements.length) {
+    elements = [
+        {id:'btn_a',type:'button',x:80,y:55,w:55,h:55,key:'Enter',label:'A',color:'#22c55e'},
+        {id:'btn_b',type:'button',x:88,y:45,w:55,h:55,key:'Escape',label:'B',color:'#ef4444'},
+        {id:'btn_x',type:'button',x:72,y:45,w:55,h:55,key:'Space',label:'X',color:'#3b82f6'},
+        {id:'btn_y',type:'button',x:80,y:35,w:55,h:55,key:'Tab',label:'Y',color:'#f59e0b'},
+        {id:'dpad_u',type:'button',x:15,y:45,w:40,h:40,key:'ArrowUp',label:'▲',color:'#6366f1'},
+        {id:'dpad_d',type:'button',x:15,y:65,w:40,h:40,key:'ArrowDown',label:'▼',color:'#6366f1'},
+        {id:'dpad_l',type:'button',x:8,y:55,w:40,h:40,key:'ArrowLeft',label:'◄',color:'#6366f1'},
+        {id:'dpad_r',type:'button',x:22,y:55,w:40,h:40,key:'ArrowRight',label:'►',color:'#6366f1'},
+        {id:'lb',type:'button',x:5,y:20,w:60,h:28,key:'Shift',label:'LB',color:'#6366f1'},
+        {id:'rb',type:'button',x:75,y:20,w:60,h:28,key:'Ctrl',label:'RB',color:'#6366f1'},
+    ];
+}
+
+// ==================== FUNCTIONS ====================
+function openSettings() {
+    document.getElementById('settingsPanel').classList.add('show');
+    populateSelects();
+    updateElementList();
+}
+
+function closeSettings() {
+    document.getElementById('settingsPanel').classList.remove('show');
+}
+
+function toggleGamepad() {
+    const c = document.getElementById('gamepadContainer');
+    c.style.display = c.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleEdit() {
+    editMode = !editMode;
+    document.getElementById('editBtn').style.background = editMode ? '#6366f1' : '';
+    renderAll();
+}
+
+function resetAll() {
+    localStorage.removeItem('nexus_gpad');
+    location.reload();
+}
+
+function saveAll() {
+    localStorage.setItem('nexus_gpad', JSON.stringify(elements));
+    closeSettings();
+}
+
+function populateSelects() {
+    const opts = KEYS.map(k => <option value=""></option>).join('');
+    ['btnKey','stickUp','stickDown','stickLeft','stickRight'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = opts;
+    });
+}
+
+function updateElementList() {
+    const sel = document.getElementById('elemSelect');
+    sel.innerHTML = '<option value="">-- Choose --</option>' + 
+        elements.map(e => <option value=""> </option>).join('');
+}
+
+function selectElement() {
+    const id = document.getElementById('elemSelect').value;
+    if (!id) { document.getElementById('elemSettings').style.display='none'; return; }
+    selectedId = id;
+    const el = elements.find(e => e.id === id);
+    if (!el) return;
+    
+    document.getElementById('elemSettings').style.display='block';
+    document.getElementById('elemType').value = el.type;
+    document.getElementById('elemLabel').value = el.label||'';
+    document.getElementById('elemColor').value = el.color||'#6366f1';
+    document.getElementById('elemSize').value = el.w||60;
+    document.getElementById('sizeVal').textContent = el.w||60;
+    
+    if (el.type === 'button') {
+        document.getElementById('btnMapping').style.display='block';
+        document.getElementById('stickMapping').style.display='none';
+        document.getElementById('btnKey').value = el.key||'';
+    } else {
+        document.getElementById('btnMapping').style.display='none';
+        document.getElementById('stickMapping').style.display='block';
+        if (el.keys) {
+            document.getElementById('stickUp').value = el.keys.up||'';
+            document.getElementById('stickDown').value = el.keys.down||'';
+            document.getElementById('stickLeft').value = el.keys.left||'';
+            document.getElementById('stickRight').value = el.keys.right||'';
+        }
+    }
+}
+
+function onTypeChange() {
+    const t = document.getElementById('elemType').value;
+    document.getElementById('btnMapping').style.display = t==='button'?'block':'none';
+    document.getElementById('stickMapping').style.display = t==='stick'?'block':'none';
+}
+
+function applyElement() {
+    if (!selectedId) return;
+    const el = elements.find(e => e.id === selectedId);
+    if (!el) return;
+    
+    el.type = document.getElementById('elemType').value;
+    el.label = document.getElementById('elemLabel').value;
+    el.color = document.getElementById('elemColor').value;
+    el.w = parseInt(document.getElementById('elemSize').value);
+    el.h = parseInt(document.getElementById('elemSize').value);
+    
+    if (el.type === 'button') {
+        el.key = document.getElementById('btnKey').value;
+    } else {
+        el.keys = {
+            up: document.getElementById('stickUp').value,
+            down: document.getElementById('stickDown').value,
+            left: document.getElementById('stickLeft').value,
+            right: document.getElementById('stickRight').value
         };
+    }
+    
+    renderAll();
+    updateElementList();
+}
+
+function deleteElement() {
+    if (!selectedId) return;
+    elements = elements.filter(e => e.id !== selectedId);
+    selectedId = null;
+    document.getElementById('elemSettings').style.display='none';
+    renderAll();
+    updateElementList();
+}
+
+function addButton() {
+    const id = 'btn_' + Date.now();
+    elements.push({id,type:'button',x:50,y:50,w:55,h:55,key:'Enter',label:'?',color:'#6366f1'});
+    renderAll();
+    updateElementList();
+}
+
+function addStick() {
+    const id = 'stick_' + Date.now();
+    elements.push({id,type:'stick',x:30,y:55,w:90,h:90,keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},label:'',color:'#6366f1'});
+    renderAll();
+    updateElementList();
+}
+
+function toggleMouse() {
+    document.getElementById('mouseArea').style.display = document.getElementById('mouseShow').checked ? 'block' : 'none';
+}
+
+// ==================== RENDER ====================
+function renderAll() {
+    const container = document.getElementById('gamepadContainer');
+    container.innerHTML = '';
+    
+    elements.forEach((el, i) => {
+        const div = document.createElement('div');
+        div.className = 'gbtn';
+        div.id = el.id;
+        div.style.borderColor = el.color;
+        div.style.background = el.color + '30';
+        div.textContent = el.label || (el.type==='stick'?'🕹':'');
         
-        let elements = [];
-        let editMode = false;
-        let selectedId = null;
-        let dragging = null;
-        let dragOffset = {x:0,y:0};
-        
-        // ==================== INIT ====================
-        function init() {
-            loadConfig();
-            populateKeySelects();
-            populateIconGrid();
-            renderAll();
-            setupMouse();
+        if (el.type === 'stick') {
+            const inner = document.createElement('div');
+            inner.className = 'stick-inner';
+            div.appendChild(inner);
         }
         
-        function loadConfig() {
-            const saved = localStorage.getItem('nexus_gpad_v2');
-            if (saved) {
-                try { elements = JSON.parse(saved); } catch(e) { loadDefault(); }
-            } else {
-                loadDefault();
-            }
-        }
+        const vw = innerWidth/100, vh = innerHeight/100;
+        div.style.left = (el.x*vw - el.w/2) + 'px';
+        div.style.top = (el.y*vh - el.h/2) + 'px';
+        div.style.width = el.w + 'px';
+        div.style.height = el.h + 'px';
+        div.style.fontSize = (Math.min(el.w,el.h)*0.3) + 'px';
         
-        function loadDefault() {
-            elements = JSON.parse(JSON.stringify(PRESETS.default.elements));
-        }
+        if (editMode) div.style.cursor = 'move';
         
-        function loadPreset(name) {
-            if (PRESETS[name]) {
-                elements = JSON.parse(JSON.stringify(PRESETS[name].elements));
-                renderAll();
-                updateElementSelect();
-                showToast('Preset loaded: ' + name);
-            }
-            document.querySelectorAll('.preset-item').forEach(el => el.classList.remove('active'));
-            event?.target?.classList.add('active');
-        }
+        div.addEventListener('touchstart', (e) => { e.preventDefault(); if(!editMode) div.classList.add('pressed'); });
+        div.addEventListener('touchend', () => div.classList.remove('pressed'));
+        div.addEventListener('mousedown', (e) => { e.preventDefault(); if(!editMode) div.classList.add('pressed'); });
+        div.addEventListener('mouseup', () => div.classList.remove('pressed'));
         
-        // ==================== RENDER ====================
-        function renderAll() {
-            const container = document.getElementById('gamepadContainer');
-            container.innerHTML = '';
-            
-            elements.forEach((el, i) => {
-                const div = document.createElement('div');
-                div.className = 'gpad-btn';
-                div.id = el.id;
-                div.dataset.type = el.type;
-                div.dataset.index = i;
-                
-                if (el.icon && el.icon.length <= 4) {
-                    div.textContent = el.icon;
-                } else if (el.icon) {
-                    div.style.backgroundImage = url();
-                } else {
-                    div.textContent = el.label || '';
-                }
-                
-                div.style.borderColor = el.color + '80';
-                div.style.backgroundColor = el.color + '20';
-                
-                posElement(div, el);
-                
-                if (editMode) {
-                    div.style.cursor = 'move';
-                    const indicator = document.createElement('div');
-                    indicator.className = 'edit-indicator';
-                    indicator.textContent = '✎';
-                    div.appendChild(indicator);
-                }
-                
-                if (el.type === 'stick') {
-                    const inner = document.createElement('div');
-                    inner.className = 'stick-inner';
-                    div.appendChild(inner);
-                }
-                
-                // Events
-                div.addEventListener('touchstart', (e) => { if(!editMode){ e.preventDefault(); pressElement(el); } else { e.preventDefault(); startDrag(e, el, div); } });
-                div.addEventListener('touchend', (e) => { if(!editMode) releaseElement(el); else stopDrag(); });
-                div.addEventListener('mousedown', (e) => { if(!editMode){ e.preventDefault(); pressElement(el); } else { startDrag(e, el, div); } });
-                div.addEventListener('mouseup', () => { if(!editMode) releaseElement(el); else stopDrag(); });
-                div.addEventListener('mouseleave', () => { if(!editMode) releaseElement(el); });
-                
-                container.appendChild(div);
-            });
-            
-            updateElementSelect();
-        }
-        
-        function posElement(div, el) {
-            const vw = window.innerWidth / 100;
-            const vh = window.innerHeight / 100;
-            div.style.left = (el.x * vw - el.w / 2) + 'px';
-            div.style.top = (el.y * vh - el.h / 2) + 'px';
-            div.style.width = el.w + 'px';
-            div.style.height = el.h + 'px';
-            div.style.fontSize = (Math.min(el.w, el.h) * 0.35) + 'px';
-        }
-        
-        // ==================== INTERACTIONS ====================
-        function pressElement(el) {
-            document.getElementById(el.id)?.classList.add('pressed');
-            if (el.type === 'button') {
-                sendInput(el.key, true);
-            }
-            if (navigator.vibrate) navigator.vibrate(8);
-        }
-        
-        function releaseElement(el) {
-            document.getElementById(el.id)?.classList.remove('pressed');
-            if (el.type === 'button') {
-                sendInput(el.key, false);
-            }
-        }
-        
-        function sendInput(key, pressed) {
-            window.parent?.postMessage({type:'input',key,pressed},'*');
-            fetch('/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,pressed})}).catch(()=>{});
-        }
-        
-        // ==================== DRAG ====================
-        function startDrag(e, el, div) {
-            if (!editMode) return;
-            e.preventDefault();
-            dragging = { el, div };
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            const rect = div.getBoundingClientRect();
-            dragOffset = { x: cx - rect.left, y: cy - rect.top };
-            
-            document.addEventListener('touchmove', onDrag, {passive:false});
-            document.addEventListener('touchend', stopDrag);
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
-        }
-        
-        function onDrag(e) {
-            if (!dragging) return;
-            e.preventDefault();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            const vw = window.innerWidth / 100;
-            const vh = window.innerHeight / 100;
-            
-            dragging.el.x = Math.round((cx - dragOffset.x + dragging.el.w/2) / vw);
-            dragging.el.y = Math.round((cy - dragOffset.y + dragging.el.h/2) / vh);
-            posElement(dragging.div, dragging.el);
-        }
-        
-        function stopDrag() {
-            dragging = null;
-            document.removeEventListener('touchmove', onDrag);
-            document.removeEventListener('touchend', stopDrag);
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
-            saveConfig();
-        }
-        
-        // ==================== SETTINGS ====================
-        function togglePanel() { document.getElementById('panel').classList.toggle('show'); }
-        function toggleVisibility() { document.getElementById('gamepadContainer').style.display = document.getElementById('gamepadContainer').style.display === 'none' ? 'block' : 'none'; }
-        function toggleEdit() { editMode = !editMode; document.getElementById('editBtn').classList.toggle('active',editMode); renderAll(); showToast(editMode?'Edit mode ON':'Edit mode OFF'); }
-        function resetAll() { loadDefault(); renderAll(); showToast('Reset to default'); }
-        
-        function selectElement() {
-            const id = document.getElementById('elemSelect').value;
-            if (!id) { document.getElementById('elemSettings').style.display = 'none'; return; }
-            selectedId = id;
-            const el = elements.find(e => e.id === id);
-            if (!el) return;
-            
-            document.getElementById('elemSettings').style.display = 'block';
-            document.getElementById('elemType').value = el.type;
-            document.getElementById('elemLabel').value = el.label || '';
-            document.getElementById('elemColor').value = el.color || '#6366f1';
-            document.getElementById('elemSize').value = el.w || 60;
-            document.getElementById('sizeVal').textContent = el.w || 60;
-            
-            if (el.type === 'button') {
-                document.getElementById('buttonMapping').style.display = 'block';
-                document.getElementById('stickMapping').style.display = 'none';
-                document.getElementById('btnKey').value = el.key || '';
-            } else {
-                document.getElementById('buttonMapping').style.display = 'none';
-                document.getElementById('stickMapping').style.display = 'block';
-                document.querySelectorAll('.stick-key').forEach(sel => {
-                    const dir = sel.dataset.dir;
-                    sel.value = el.keys?.[dir] || '';
-                });
-            }
-        }
-        
-        function onTypeChange() {
-            const type = document.getElementById('elemType').value;
-            document.getElementById('buttonMapping').style.display = type === 'button' ? 'block' : 'none';
-            document.getElementById('stickMapping').style.display = type === 'stick' ? 'block' : 'none';
-        }
-        
-        function applyElement() {
-            if (!selectedId) return;
-            const el = elements.find(e => e.id === selectedId);
-            if (!el) return;
-            
-            el.type = document.getElementById('elemType').value;
-            el.label = document.getElementById('elemLabel').value;
-            el.color = document.getElementById('elemColor').value;
-            el.w = parseInt(document.getElementById('elemSize').value);
-            el.h = parseInt(document.getElementById('elemSize').value);
-            document.getElementById('sizeVal').textContent = el.w;
-            
-            if (el.type === 'button') {
-                el.key = document.getElementById('btnKey').value;
-            } else {
-                el.keys = {};
-                document.querySelectorAll('.stick-key').forEach(sel => {
-                    el.keys[sel.dataset.dir] = sel.value;
-                });
-            }
-            
-            renderAll();
-            saveConfig();
-            showToast('Element updated!');
-        }
-        
-        function deleteElement() {
-            if (!selectedId) return;
-            elements = elements.filter(e => e.id !== selectedId);
-            selectedId = null;
-            document.getElementById('elemSettings').style.display = 'none';
-            document.getElementById('elemSelect').value = '';
-            renderAll();
-            saveConfig();
-            showToast('Element deleted');
-        }
-        
-        function addElement() {
-            const id = 'btn_' + Date.now();
-            elements.push({id,type:'button',x:50,y:50,w:55,h:55,key:'Enter',label:'?',color:'#6366f1',icon:''});
-            renderAll();
-            showToast('Button added! Drag to position');
-        }
-        
-        function addStick() {
-            const id = 'stick_' + Date.now();
-            elements.push({id,type:'stick',x:30,y:55,w:90,h:90,keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},label:'',color:'#6366f1',icon:'🕹'});
-            renderAll();
-            showToast('Stick added! Drag to position');
-        }
-        
-        function saveAll() {
-            saveConfig();
-            showToast('All saved!');
-        }
-        
-        function saveConfig() {
-            localStorage.setItem('nexus_gpad_v2', JSON.stringify(elements));
-        }
-        
-        function updateElementSelect() {
-            const sel = document.getElementById('elemSelect');
-            sel.innerHTML = '<option value="">-- Choose element --</option>' + elements.map(e => <option value=""> </option>).join('');
-        }
-        
-        function populateKeySelects() {
-            const opts = KEY_OPTIONS.map(k => <option value=""></option>).join('');
-            document.getElementById('btnKey').innerHTML = opts;
-            document.querySelectorAll('.stick-key').forEach(sel => { sel.innerHTML = opts; });
-        }
-        
-        function populateIconGrid() {
-            const grid = document.getElementById('iconGrid');
-            grid.innerHTML = ICONS.map(i => <div class="icon-item" onclick="setIcon('')" title=""></div>).join('');
-        }
-        
-        function setIcon(icon) {
-            if (!selectedId) return;
-            const el = elements.find(e => e.id === selectedId);
-            if (el) { el.icon = icon; renderAll(); }
-            document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('selected'));
-            event?.target?.classList.add('selected');
-        }
-        
-        function setupMouse() {
-            const area = document.getElementById('mouseArea');
-            area.style.left = '25%'; area.style.top = '15%'; area.style.width = '50%'; area.style.height = '60%';
-            
-            let active = false, last = {x:0,y:0};
-            area.addEventListener('touchstart', (e) => { active=true; last={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
-            area.addEventListener('touchmove', (e) => {
-                if(!active) return; e.preventDefault();
-                const sens = parseInt(document.getElementById('mouseSens')?.value||15)/10;
-                const dx = (e.touches[0].clientX-last.x)*sens;
-                const dy = (e.touches[0].clientY-last.y)*sens;
-                window.parent?.postMessage({type:'mouse',dx,dy},'*');
-                last={x:e.touches[0].clientX,y:e.touches[0].clientY};
-            });
-            area.addEventListener('touchend',()=>{active=false;});
-        }
-        
-        function applySettings() { setupMouse(); }
-        
-        function showToast(msg) {
-            const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-            document.body.appendChild(t); setTimeout(()=>t.remove(),2000);
-        }
-        
-        init();
-    </script>
+        container.appendChild(div);
+    });
+}
+
+// Mouse area
+const ma = document.getElementById('mouseArea');
+ma.style.left='25%'; ma.style.top='15%'; ma.style.width='50%'; ma.style.height='60%';
+let maActive=false, maLast={x:0,y:0};
+ma.addEventListener('touchstart', e => { maActive=true; maLast={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
+ma.addEventListener('touchmove', e => {
+    if(!maActive) return; e.preventDefault();
+    const s = parseInt(document.getElementById('mouseSens')?.value||15)/10;
+    const dx = (e.touches[0].clientX-maLast.x)*s;
+    const dy = (e.touches[0].clientY-maLast.y)*s;
+    maLast={x:e.touches[0].clientX,y:e.touches[0].clientY};
+});
+ma.addEventListener('touchend', ()=> maActive=false);
+
+renderAll();
+</script>
 </body>
 </html>
