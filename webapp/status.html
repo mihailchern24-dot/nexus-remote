@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
+        nav { background: #0d0d24; border-bottom: 1px solid #1a1a3e; padding: 16px 20px; text-align: center; }
+        .logo { font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        h1 { text-align: center; font-size: 32px; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 40px; }
+        
+        .overall-status {
+            text-align: center; padding: 32px; background: #151530; border-radius: 16px; margin-bottom: 32px;
+        }
+        .status-indicator { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; }
+        .status-indicator.online { background: #22c55e; box-shadow: 0 0 12px #22c55e; animation: pulse 2s infinite; }
+        .status-indicator.degraded { background: #f59e0b; }
+        .status-indicator.offline { background: #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .service-list { display: flex; flex-direction: column; gap: 12px; }
+        .service-item { background: #151530; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .service-name { font-weight: 600; }
+        .service-status { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .uptime { font-size: 12px; color: #888; }
+        
+        .incidents { margin-top: 40px; }
+        .incident { background: #151530; border: 1px solid #2a2a4a; border-radius: 12px; padding: 16px; margin-bottom: 8px; }
+        .incident-date { font-size: 12px; color: #888; }
+        .incident-title { font-weight: 600; margin: 4px 0; }
+        .incident-desc { font-size: 13px; color: #888; }
+    </style>
+    <meta http-equiv="refresh" content="30">
+</head>
+<body>
+    <nav><div class="logo">⚡ Nexus Remote Status</div></nav>
+    <div class="container">
+        <h1>System Status</h1>
+        <p class="subtitle">Real-time service monitoring</p>
+        
+        <div class="overall-status">
+            <div style="font-size:48px;margin-bottom:8px">✅</div>
+            <div style="font-size:24px;font-weight:700">All Systems Operational</div>
+            <div style="color:#888;margin-top:4px">Last updated: <span id="lastUpdate">Just now</span></div>
+        </div>
+        
+        <div class="service-list" id="serviceList">
+            <div class="service-item">
+                <div><div class="service-name">🔗 Signaling Server</div><div class="uptime">Port 10000</div></div>
+                <div class="service-status"><span class="status-indicator online"></span> Online</div>
+            </div>
+            <div class="service-item">
+                <div><div class="service-name">🔄 Relay Server</div><div class="uptime">Port 9000</div></div>
+                <div class="service-status"><span class="status-indicator online"></span> Online</div>
+            </div>
+            <div class="service-item">
+                <div><div class="service-name">🔐 Auth Server</div><div class="uptime">Port 10000</div></div>
+                <div class="service-status"><span class="status-indicator online"></span> Online</div>
+            </div>
+            <div class="service-item">
+                <div><div class="service-name">🌐 WebSocket</div><div class="uptime">Port 8080</div></div>
+                <div class="service-status"><span class="status-indicator online"></span> Online</div>
+            </div>
+            <div class="service-item">
+                <div><div class="service-name">📊 API</div><div class="uptime">HTTPS</div></div>
+                <div class="service-status"><span class="status-indicator online"></span> Online</div>
+            </div>
+        </div>
+        
+        <div class="incidents" style="margin-top:40px">
+            <h2 style="margin-bottom:20px">Recent Incidents</h2>
+            <div class="incident">
+                <div class="incident-date">Jul 22, 2026</div>
+                <div class="incident-title">✅ All services restored</div>
+                <div class="incident-desc">Deployment successful. All systems operational.</div>
+            </div>
+            <div class="incident">
+                <div class="incident-date">Jul 22, 2026</div>
+                <div class="incident-title">🔄 Deployment in progress</div>
+                <div class="incident-desc">New version v4.0 rolling out with auth system.</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                console.log('Status:', data);
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Docs - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; display: flex; }
+        .sidebar { width: 260px; background: #0d0d24; border-right: 1px solid #1a1a3e; padding: 24px; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+        .sidebar h3 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .sidebar a { display: block; color: #888; text-decoration: none; font-size: 13px; padding: 6px 0; }
+        .sidebar a:hover { color: #fff; }
+        .main { flex: 1; padding: 40px; max-width: 800px; }
+        h1 { font-size: 36px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 24px; }
+        h2 { font-size: 24px; margin-top: 40px; margin-bottom: 16px; color: #fff; border-bottom: 1px solid #2a2a4a; padding-bottom: 8px; }
+        .endpoint { background: #151530; border: 1px solid #2a2a4a; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+        .endpoint-header { padding: 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #2a2a4a; }
+        .method { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+        .method.get { background: #22c55e; color: #fff; }
+        .method.post { background: #6366f1; color: #fff; }
+        .endpoint-url { font-family: 'Consolas', monospace; font-size: 14px; }
+        .endpoint-body { padding: 16px; }
+        .endpoint-body p { color: #888; font-size: 13px; margin-bottom: 8px; }
+        pre { background: #0a0a1a; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; color: #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>📚 API Reference</h3>
+        <a href="#auth">Authentication</a>
+        <a href="#register">Register</a>
+        <a href="#peers">Peers</a>
+        <a href="#stream">Streaming</a>
+        <a href="#frames">Frames</a>
+        <a href="#wol">Wake-on-LAN</a>
+    </div>
+    
+    <div class="main">
+        <h1>📚 Nexus Remote API</h1>
+        <p style="color:#888;margin-bottom:32px">Base URL: <code style="color:#6366f1">https://nexus-remote.onrender.com</code></p>
+        
+        <h2 id="auth">🔐 Authentication</h2>
+        
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/api/auth/register</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Create a new account</p>
+                <pre>{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}</pre>
+            </div>
+        </div>
+        
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/api/auth/login</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Sign in to your account</p>
+                <pre>{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+→ {"token": "abc...", "peer_id": "nexus-abc123"}</pre>
+            </div>
+        </div>
+        
+        <h2 id="register">📝 Register Device</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/register</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Register a device on the network</p>
+                <pre>{
+  "peer_id": "my-device-001",
+  "platform": "windows",
+  "compression": "zstd",
+  "encryption": "aes_gcm"
+}</pre>
+            </div>
+        </div>
+        
+        <h2 id="peers">👥 Peers</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="endpoint-url">/peers</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Get list of online peers</p>
+                <pre>→ {"peers": ["device1", "device2"], "count": 2}</pre>
+            </div>
+        </div>
+        
+        <h2 id="stream">📺 Streaming</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/start_stream</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Start streaming between devices</p>
+                <pre>{
+  "source": "device1",
+  "target": "device2",
+  "quality": "high"
+}
+→ {"status": "streaming", "stream_id": "stream_..."}</pre>
+            </div>
+        </div>
+        
+        <h2 id="frames">📸 Frames</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/send_frame</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Send a video/audio frame</p>
+                <pre>{
+  "stream_id": "stream_...",
+  "from": "device1",
+  "target": "device2",
+  "frame": "base64encodeddata",
+  "type": "video"
+}</pre>
+            </div>
+        </div>
+        
+        <h2 id="wol">⚡ Wake-on-LAN</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/wol</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Send Wake-on-LAN magic packet</p>
+                <pre>{
+  "mac": "AA:BB:CC:DD:EE:FF",
+  "peer_id": "my-device"
+}
+→ {"status": "wol_sent", "success": true}</pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

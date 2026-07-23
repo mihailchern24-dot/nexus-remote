@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Viewer - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
+        nav {
+            background: #0d0d24; border-bottom: 1px solid #1a1a3e;
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 20px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .toolbar { display: flex; gap: 8px; align-items: center; }
+        .toolbar button {
+            padding: 8px 16px; border: 1px solid #2a2a4a; border-radius: 8px;
+            background: #151530; color: #e0e0e0; cursor: pointer; font-size: 13px;
+        }
+        .toolbar button:hover { border-color: #6366f1; }
+        .toolbar button.active { background: #6366f1; border-color: #6366f1; }
+        
+        .viewer-container {
+            display: flex; height: calc(100vh - 52px);
+        }
+        .sidebar {
+            width: 300px; background: #0d0d24; border-right: 1px solid #1a1a3e;
+            padding: 20px; overflow-y: auto;
+        }
+        .sidebar h3 { font-size: 14px; color: #888; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+        .peer-item {
+            display: flex; align-items: center; gap: 10px; padding: 12px;
+            background: #151530; border-radius: 10px; margin-bottom: 8px;
+            cursor: pointer; border: 1px solid transparent;
+        }
+        .peer-item:hover { border-color: #6366f1; }
+        .peer-item.active { border-color: #6366f1; background: rgba(99,102,241,0.1); }
+        .peer-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+        .peer-dot.offline { background: #ef4444; }
+        
+        .main-viewer {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: #000; position: relative;
+        }
+        #remoteScreen {
+            max-width: 100%; max-height: 100%; object-fit: contain;
+        }
+        .no-connection {
+            text-align: center; color: #666;
+        }
+        .no-connection .icon { font-size: 64px; margin-bottom: 16px; }
+        
+        .controls-bar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; background: rgba(0,0,0,0.8); padding: 10px 20px;
+            border-radius: 12px; backdrop-filter: blur(10px);
+        }
+        .controls-bar button {
+            padding: 8px 16px; border: none; border-radius: 8px;
+            background: #6366f1; color: #fff; cursor: pointer; font-size: 12px;
+        }
+        
+        .stats {
+            position: absolute; top: 16px; right: 16px;
+            background: rgba(0,0,0,0.7); padding: 8px 12px;
+            border-radius: 8px; font-size: 11px; color: #888;
+        }
+        .stats span { color: #22c55e; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">⚡ Nexus Remote Web Viewer</div>
+        <div class="toolbar">
+            <input type="text" id="peerIdInput" placeholder="Peer ID or link..." style="padding:8px 12px;border-radius:8px;border:1px solid #2a2a4a;background:#151530;color:#fff;width:250px">
+            <button onclick="connectToPeer()">Connect</button>
+            <button id="fullscreenBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <button onclick="window.location.href='/'">✕ Close</button>
+        </div>
+    </nav>
+    
+    <div class="viewer-container">
+        <div class="sidebar">
+            <h3>📱 My Devices</h3>
+            <div id="peerList">
+                <div class="peer-item">
+                    <div class="peer-dot offline"></div>
+                    <div>Loading devices...</div>
+                </div>
+            </div>
+            
+            <h3 style="margin-top:24px">📊 Connection Info</h3>
+            <div id="connectionInfo" style="font-size:12px;color:#888">
+                <p>Not connected</p>
+            </div>
+        </div>
+        
+        <div class="main-viewer" id="mainViewer">
+            <div class="no-connection" id="noConnection">
+                <div class="icon">🖥</div>
+                <h2>No device connected</h2>
+                <p style="color:#888;margin-top:8px">Enter a Peer ID or select a device to start viewing</p>
+            </div>
+            <canvas id="remoteScreen" style="display:none"></canvas>
+            
+            <div class="stats" id="stats" style="display:none">
+                FPS: <span id="fpsStat">0</span> | 
+                Latency: <span id="latencyStat">0ms</span> | 
+                Resolution: <span id="resStat">-</span>
+            </div>
+            
+            <div class="controls-bar" id="controls" style="display:none">
+                <button onclick="sendKey('ctrl+alt+del')">Ctrl+Alt+Del</button>
+                <button onclick="toggleQuality()">Quality: <span id="qualityLabel">Auto</span></button>
+                <button onclick="disconnect()">⏹ Disconnect</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        let connectedPeer = null;
+        let streamInterval = null;
+        let framesReceived = 0;
+        let startTime = Date.now();
+        
+        // Load peers
+        async function loadPeers() {
+            try {
+                const resp = await fetch('/peers');
+                const data = await resp.json();
+                const peers = data.peers || [];
+                
+                document.getElementById('peerList').innerHTML = peers.map(p => 
+                    <div class="peer-item" onclick="quickConnect('')">
+                        <div class="peer-dot"></div>
+                        <div>
+                            <div style="font-size:13px">...</div>
+                            <div style="font-size:10px;color:#888">Online</div>
+                        </div>
+                    </div>
+                ).join('') || '<div class="peer-item"><div class="peer-dot offline"></div><div>No devices online</div></div>';
+            } catch(e) {}
+        }
+        
+        function quickConnect(peerId) {
+            document.getElementById('peerIdInput').value = peerId;
+            connectToPeer();
+        }
+        
+        async function connectToPeer() {
+            const peerId = document.getElementById('peerIdInput').value.trim();
+            if (!peerId) return alert('Enter Peer ID');
+            
+            try {
+                const resp = await fetch(API + '/start_stream', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({source: peerId, target: 'web-viewer', quality: 'high'})
+                });
+                const data = await resp.json();
+                
+                if (data.status === 'streaming') {
+                    connectedPeer = peerId;
+                    document.getElementById('noConnection').style.display = 'none';
+                    document.getElementById('remoteScreen').style.display = 'block';
+                    document.getElementById('stats').style.display = 'block';
+                    document.getElementById('controls').style.display = 'flex';
+                    startReceiving();
+                }
+            } catch(e) {
+                alert('Connection failed');
+            }
+        }
+        
+        async function startReceiving() {
+            const canvas = document.getElementById('remoteScreen');
+            const ctx = canvas.getContext('2d');
+            
+            const receiveFrame = async () => {
+                if (!connectedPeer) return;
+                
+                try {
+                    const resp = await fetch(API + '/get_frame', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({peer_id: 'web-viewer'})
+                    });
+                    const frame = await resp.json();
+                    
+                    if (frame.type === 'video' && frame.data) {
+                        const img = new Image();
+                        img.onload = () => {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0);
+                            framesReceived++;
+                            
+                            const elapsed = (Date.now() - startTime) / 1000;
+                            document.getElementById('fpsStat').textContent = Math.round(framesReceived / elapsed);
+                            document.getElementById('resStat').textContent = img.width + 'x' + img.height;
+                        };
+                        img.src = 'data:image/jpeg;base64,' + frame.data;
+                    }
+                } catch(e) {}
+            };
+            
+            streamInterval = setInterval(receiveFrame, 1000/30);
+        }
+        
+        function disconnect() {
+            connectedPeer = null;
+            clearInterval(streamInterval);
+            document.getElementById('noConnection').style.display = 'block';
+            document.getElementById('remoteScreen').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.getElementById('mainViewer').requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function sendKey(key) {
+            fetch(API + '/send_key', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({peer: connectedPeer, key: key})
+            });
+        }
+        
+        function toggleQuality() {
+            const label = document.getElementById('qualityLabel');
+            const qualities = ['Auto', 'High', 'Medium', 'Low'];
+            const current = qualities.indexOf(label.textContent);
+            label.textContent = qualities[(current + 1) % qualities.length];
+        }
+        
+        loadPeers();
+        setInterval(loadPeers, 10000);
+    </script>
+</body>
+</html>

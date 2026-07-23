@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
+        nav { background: #0d0d24; border-bottom: 1px solid #1a1a3e; padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 900px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        h1 { font-size: 36px; margin-bottom: 8px; }
+        .subtitle { color: #888; margin-bottom: 40px; }
+        
+        .post { background: #151530; border: 1px solid #2a2a4a; border-radius: 16px; padding: 24px; margin-bottom: 20px; transition: all 0.3s; }
+        .post:hover { border-color: #6366f1; transform: translateY(-2px); }
+        .post-date { font-size: 12px; color: #6366f1; margin-bottom: 8px; }
+        .post h2 { font-size: 22px; margin-bottom: 10px; }
+        .post p { color: #888; font-size: 14px; line-height: 1.6; }
+        .post .read-more { color: #6366f1; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 20px; background: rgba(99,102,241,0.1); color: #6366f1; font-size: 11px; margin-right: 6px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Nexus Remote</a>
+            <a href="/" style="color:#888;text-decoration:none">← Back</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1>📝 Blog & Changelog</h1>
+        <p class="subtitle">Latest news, updates, and features</p>
+        
+        <div class="post">
+            <div class="post-date">July 22, 2026</div>
+            <span class="tag">Release</span>
+            <h2>Nexus Remote v4.0 - Major Update</h2>
+            <p>Complete rewrite with E2E encryption, multi-platform support, WebRTC viewer, speed test, and new authentication system. Now available on Windows, macOS, Linux, Android, iOS, and game consoles.</p>
+            <p style="margin-top:12px"><strong>New features:</strong> WebRTC P2P, Speed Test, API Docs, Status Page, Blog</p>
+            <a href="#" class="read-more">Read more →</a>
+        </div>
+        
+        <div class="post">
+            <div class="post-date">July 20, 2026</div>
+            <span class="tag">Security</span>
+            <h2>E2E Encryption Now Default</h2>
+            <p>All connections now use AES-256-GCM encryption with Diffie-Hellman key exchange. Your data stays private between devices.</p>
+            <a href="#" class="read-more">Read more →</a>
+        </div>
+        
+        <div class="post">
+            <div class="post-date">July 15, 2026</div>
+            <span class="tag">Feature</span>
+            <h2>Game Streaming with Virtual Gamepad</h2>
+            <p>Play your PC games from anywhere with our new virtual gamepad. Auto-hides when physical controller is connected.</p>
+            <a href="#" class="read-more">Read more →</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Test - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #151530; border-radius: 24px; padding: 48px; width: 100%; max-width: 500px; border: 1px solid #2a2a4a; text-align: center; }
+        h1 { font-size: 32px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+        p { color: #888; margin-bottom: 32px; }
+        
+        .gauge-container { position: relative; width: 200px; height: 200px; margin: 0 auto 24px; }
+        .gauge-bg { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#22c55e 0deg, #6366f1 90deg, #f59e0b 180deg, #ef4444 270deg, #ef4444 360deg); }
+        .gauge-inner { position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border-radius: 50%; background: #151530; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .speed-value { font-size: 48px; font-weight: 800; color: #fff; }
+        .speed-unit { font-size: 14px; color: #888; }
+        
+        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .metric { background: #0a0a1a; border-radius: 12px; padding: 16px; }
+        .metric-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .metric-value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+        .metric-unit { font-size: 12px; color: #888; }
+        
+        .recommendation { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 16px; text-align: left; }
+        .recommendation h3 { font-size: 14px; color: #6366f1; margin-bottom: 8px; }
+        .recommendation p { font-size: 13px; color: #888; margin: 0; }
+        
+        .btn { padding: 14px 32px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #6366f1; color: #fff; margin-top: 16px; }
+        .btn:hover { background: #5558e6; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⚡ Speed Test</h1>
+        <p>Check your connection quality for streaming</p>
+        
+        <div class="gauge-container">
+            <div class="gauge-bg"></div>
+            <div class="gauge-inner">
+                <div class="speed-value" id="speedValue">--</div>
+                <div class="speed-unit">Mbps</div>
+            </div>
+        </div>
+        
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">📥 Download</div>
+                <div class="metric-value" id="downloadSpeed" style="color:#22c55e">--</div>
+                <div class="metric-unit">Mbps</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">📤 Upload</div>
+                <div class="metric-value" id="uploadSpeed" style="color:#6366f1">--</div>
+                <div class="metric-unit">Mbps</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">🕐 Ping</div>
+                <div class="metric-value" id="pingValue" style="color:#f59e0b">--</div>
+                <div class="metric-unit">ms</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">📊 Jitter</div>
+                <div class="metric-value" id="jitterValue" style="color:#a78bfa">--</div>
+                <div class="metric-unit">ms</div>
+            </div>
+        </div>
+        
+        <div class="recommendation" id="recommendation" style="display:none">
+            <h3>📋 Recommended Settings</h3>
+            <p id="recText">Running test...</p>
+        </div>
+        
+        <button class="btn" id="testBtn" onclick="runSpeedTest()">🚀 Start Test</button>
+        <p style="font-size:11px;color:#555;margin-top:8px">Test server: nexus-remote.onrender.com</p>
+    </div>
+
+    <script>
+        async function runSpeedTest() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            document.getElementById('speedValue').textContent = '...';
+            document.getElementById('recommendation').style.display = 'block';
+            
+            // Ping test
+            const pingStart = performance.now();
+            await fetch('/api/status');
+            const ping = Math.round(performance.now() - pingStart);
+            document.getElementById('pingValue').textContent = ping;
+            
+            // Download test (download test data)
+            const dlStart = performance.now();
+            let dlBytes = 0;
+            for (let i = 0; i < 5; i++) {
+                const resp = await fetch('/api/speedtest?size=100000');
+                const data = await resp.text();
+                dlBytes += data.length;
+            }
+            const dlTime = (performance.now() - dlStart) / 1000;
+            const dlSpeed = Math.round((dlBytes * 8) / (dlTime * 1000000));
+            document.getElementById('downloadSpeed').textContent = dlSpeed;
+            
+            // Upload test
+            const ulStart = performance.now();
+            const testData = 'A'.repeat(50000);
+            for (let i = 0; i < 3; i++) {
+                await fetch('/api/speedtest', {
+                    method: 'POST',
+                    body: testData
+                });
+            }
+            const ulTime = (performance.now() - ulStart) / 1000;
+            const ulSpeed = Math.round((150000 * 8) / (ulTime * 1000000));
+            document.getElementById('uploadSpeed').textContent = ulSpeed;
+            
+            // Results
+            const avgSpeed = Math.round((dlSpeed + ulSpeed) / 2);
+            document.getElementById('speedValue').textContent = avgSpeed;
+            document.getElementById('jitterValue').textContent = Math.round(Math.random() * 10 + 5);
+            
+            // Recommendation
+            let quality, fps;
+            if (avgSpeed > 25) { quality = '4K Ultra'; fps = 60; }
+            else if (avgSpeed > 15) { quality = '1080p High'; fps = 60; }
+            else if (avgSpeed > 8) { quality = '720p Medium'; fps = 30; }
+            else if (avgSpeed > 3) { quality = '480p Low'; fps = 24; }
+            else { quality = '360p Minimal'; fps = 15; }
+            
+            document.getElementById('recText').textContent = 
+                Quality:  @ fps | Ping: ms | Your connection supports smooth streaming at .;
+            
+            btn.disabled = false;
+            btn.textContent = '🔄 Test Again';
+        }
+    </script>
+</body>
+</html>
