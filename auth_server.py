@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # auth_server.py - Nexus Remote Full Auth Server
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -41,12 +41,12 @@ class AuthDB:
     def login(self, email, password):
         pw_hash = hashlib.sha256(password.encode()).hexdigest()
         c = self.conn.cursor()
-        c.execute('SELECT token, peer_id, created FROM users WHERE email=? AND password_hash=?', (email, pw_hash))
+        c.execute('SELECT token, peer_id FROM users WHERE email=? AND password_hash=?', (email, pw_hash))
         row = c.fetchone()
         if row:
             c.execute('UPDATE users SET last_login=? WHERE email=?', (datetime.now().isoformat(), email))
             self.conn.commit()
-            return {"status": "ok", "token": row[0], "peer_id": row[1], "created": row[2]}
+            return {"status": "ok", "token": row[0], "peer_id": row[1]}
         return {"error": "Invalid email or password"}
     
     def reset_password(self, email, new_password):
@@ -55,14 +55,6 @@ class AuthDB:
         c.execute('UPDATE users SET password_hash=? WHERE email=?', (pw_hash, email))
         self.conn.commit()
         return c.rowcount > 0
-    
-    def get_user(self, token):
-        c = self.conn.cursor()
-        c.execute('SELECT email, peer_id, created, last_login FROM users WHERE token=?', (token,))
-        row = c.fetchone()
-        if row:
-            return {"email": row[0], "peer_id": row[1], "created": row[2], "last_login": row[3]}
-        return None
 
 db = AuthDB()
 
@@ -80,90 +72,57 @@ class AuthHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def do_GET(self):
-                routes = {
-            '/': '/app/webapp/index.html',
-            '/login': '/app/webapp/login.html',
-            '/register': '/app/webapp/register.html',
-            '/reset': '/app/webapp/reset.html',
-            '/dashboard': '/app/webapp/dashboard.html',
-            '/download': '/app/webapp/download.html',
-            '/download': '/app/webapp/download.html',
-            '/viewer': '/app/webapp/viewer.html',
-            '/speedtest': '/app/webapp/speedtest.html',
-            '/status': '/app/webapp/status.html',
-            '/docs': '/app/webapp/docs.html',
-            '/blog': '/app/webapp/blog.html',
-            '/support': '/app/webapp/support.html',
-            '/forum': '/app/webapp/forum.html',
+        pages = {
+            '/': 'index.html',
+            '/login': 'login.html',
+            '/register': 'register.html',
+            '/reset': 'reset.html',
+            '/dashboard': 'dashboard.html',
+            '/download': 'download.html',
+            '/viewer': 'viewer.html',
+            '/speedtest': 'speedtest.html',
+            '/status': 'status.html',
+            '/docs': 'docs.html',
+            '/blog': 'blog.html',
+            '/support': 'support.html',
+            '/forum': 'forum.html',
         }
         
-        if self.path in routes:
-            self._serve_html(routes[self.path])
-        elif self.path == '/api/user':
-            self._handle_get_user()
+        if self.path in pages:
+            self.serve_html(pages[self.path])
         elif self.path == '/api/status':
-            self._json({"status": "running", "server": "Nexus Remote v4.0"})
+            self.json_response({"status": "running", "server": "Nexus Remote v4.0"})
         else:
-            # Try to serve static files
-            path = '/app/webapp' + self.path
-            if os.path.exists(path):
-                self._serve_html(path)
-            else:
-                self._json_error(404)
+            self.json_response({"error": "Not found"}, 404)
     
     def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode() if content_length > 0 else '{}'
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length).decode() if length > 0 else '{}'
         try:
             data = json.loads(body)
         except:
             data = {}
         
-                routes = {
-            '/': '/app/webapp/index.html',
-            '/login': '/app/webapp/login.html',
-            '/register': '/app/webapp/register.html',
-            '/reset': '/app/webapp/reset.html',
-            '/dashboard': '/app/webapp/dashboard.html',
-            '/download': '/app/webapp/download.html',
-            '/download': '/app/webapp/download.html',
-            '/viewer': '/app/webapp/viewer.html',
-            '/speedtest': '/app/webapp/speedtest.html',
-            '/status': '/app/webapp/status.html',
-            '/docs': '/app/webapp/docs.html',
-            '/blog': '/app/webapp/blog.html',
-            '/support': '/app/webapp/support.html',
-            '/forum': '/app/webapp/forum.html',
-        }
-        
-        if self.path in routes:
-            result = routes[self.path]()
-            self._json(result)
+        if self.path == '/api/auth/register':
+            result = db.register(data.get('email', ''), data.get('password', ''))
+            self.json_response(result)
+        elif self.path == '/api/auth/login':
+            result = db.login(data.get('email', ''), data.get('password', ''))
+            self.json_response(result)
         elif self.path == '/api/auth/reset':
-            email = data.get('email', '')
-            new_pass = data.get('new_password', '')
-            if db.reset_password(email, new_pass):
-                self._json({"status": "password_reset"})
+            ok = db.reset_password(data.get('email', ''), data.get('new_password', ''))
+            if ok:
+                self.json_response({"status": "password_reset"})
             else:
-                self._json_error(400, "Email not found")
+                self.json_response({"error": "Email not found"}, 400)
         else:
-            self._json_error(404)
+            self.json_response({"error": "Not found"}, 404)
     
-    def _handle_get_user(self):
-        token = self.headers.get('Authorization', '').replace('Bearer ', '')
-        if token:
-            user = db.get_user(token)
-            if user:
-                self._json(user)
-                return
-        self._json_error(401, "Invalid token")
-    
-    def _serve_html(self, path):
+    def serve_html(self, filename):
+        path = os.path.join('/app/webapp', filename)
+        if not os.path.exists(path):
+            path = os.path.join('webapp', filename)
         try:
-            # Try /app path first (Docker), then local
-            if not os.path.exists(path):
-                path = path.replace('/app/', '')
-            
             with open(path, 'r', encoding='utf-8') as f:
                 html = f.read()
             self.send_response(200)
@@ -171,21 +130,19 @@ class AuthHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(html.encode())
         except Exception as e:
-            self._json_error(404, str(e))
+            self.json_response({"error": str(e)}, 500)
     
-    def _json(self, data, code=200):
+    def json_response(self, data, code=200):
         self.send_response(code)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
     
-    def _json_error(self, code, msg="Error"):
-        self._json({"error": msg}, code)
+    def log_message(self, format, *args):
+        pass
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     print(f"Nexus Remote Auth Server on port {port}")
     HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
-
-
