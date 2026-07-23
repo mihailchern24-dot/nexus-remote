@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nexus Remote - Mobile Gamepad</title>
+    <title>Nexus Gamepad - Customizable Overlay</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
         body {
@@ -15,258 +15,533 @@
             top: 0; left: 0; right: 0; bottom: 0;
         }
         
-        .gamepad-container {
+        /* ============ SETTINGS PANEL ============ */
+        .settings-panel {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95vw;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10,10,26,0.95);
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 20px;
+            width: 90vw;
+            max-width: 380px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 10000;
+            display: none;
+            backdrop-filter: blur(20px);
+        }
+        .settings-panel.show { display: block; }
+        .settings-panel h2 { color: #6366f1; font-size: 18px; margin-bottom: 16px; text-align: center; }
+        .settings-panel h3 { color: #888; font-size: 13px; margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(42,42,74,0.5); }
+        .setting-row label { color: #ccc; font-size: 12px; }
+        .setting-row input[type="range"] { width: 120px; accent-color: #6366f1; }
+        .setting-row select { background: #0a0a1a; color: #fff; border: 1px solid #2a2a4a; border-radius: 6px; padding: 4px 8px; font-size: 11px; }
+        .setting-row input[type="text"] { background: #0a0a1a; color: #fff; border: 1px solid #2a2a4a; border-radius: 6px; padding: 6px 8px; font-size: 11px; width: 100px; }
+        .setting-row input[type="checkbox"] { accent-color: #6366f1; }
+        
+        .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+        .btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .btn-save { background: #6366f1; color: #fff; }
+        .btn-reset { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
+        .btn-close { background: transparent; border: 1px solid #2a2a4a; color: #888; }
+        
+        /* ============ GAMEPAD OVERLAY ============ */
+        .gamepad-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             z-index: 9999;
+            pointer-events: none;
         }
+        .gamepad-overlay.active { pointer-events: auto; }
         
-        .gamepad-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn {
-            width: 55px; height: 55px;
+        .gpad-btn {
+            position: absolute;
             border-radius: 50%;
-            border: 2px solid rgba(99,102,241,0.5);
-            background: rgba(21,21,48,0.85);
+            border: 2px solid rgba(99,102,241,0.4);
+            background: rgba(21,21,48,0.75);
             color: #e0e0e0;
-            font-size: 20px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.1s;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-        .btn:active, .btn.pressed {
-            background: rgba(99,102,241,0.6);
-            border-color: #818cf8;
-            transform: scale(0.9);
-            box-shadow: 0 0 20px rgba(99,102,241,0.5);
-        }
-        
-        .btn-a { border-color: rgba(34,197,94,0.5); }
-        .btn-a:active { background: rgba(34,197,94,0.6); border-color: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.5); }
-        .btn-b { border-color: rgba(239,68,68,0.5); }
-        .btn-b:active { background: rgba(239,68,68,0.6); border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.5); }
-        .btn-x { border-color: rgba(59,130,246,0.5); }
-        .btn-x:active { background: rgba(59,130,246,0.6); border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.5); }
-        .btn-y { border-color: rgba(245,158,11,0.5); }
-        .btn-y:active { background: rgba(245,158,11,0.6); border-color: #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.5); }
-        
-        .btn-sm { width: 42px; height: 42px; font-size: 14px; }
-        .btn-lg { width: 65px; height: 65px; font-size: 24px; }
-        
-        .stick-area {
-            width: 120px; height: 120px;
-            border-radius: 50%;
-            border: 2px solid rgba(99,102,241,0.3);
-            background: rgba(21,21,48,0.5);
-            position: relative;
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            pointer-events: auto;
+            z-index: 9999;
+            background-size: 60%;
+            background-repeat: no-repeat;
+            background-position: center;
         }
-        .stick {
-            width: 45px; height: 45px;
+        .gpad-btn:active, .gpad-btn.pressed {
+            background-color: rgba(99,102,241,0.6);
+            border-color: #818cf8;
+            transform: scale(0.85);
+            box-shadow: 0 0 25px rgba(99,102,241,0.6);
+        }
+        
+        .gpad-btn[data-type="a"] { border-color: rgba(34,197,94,0.5); }
+        .gpad-btn[data-type="a"]:active { background: rgba(34,197,94,0.6); border-color: #22c55e; box-shadow: 0 0 25px rgba(34,197,94,0.6); }
+        .gpad-btn[data-type="b"] { border-color: rgba(239,68,68,0.5); }
+        .gpad-btn[data-type="b"]:active { background: rgba(239,68,68,0.6); border-color: #ef4444; box-shadow: 0 0 25px rgba(239,68,68,0.6); }
+        .gpad-btn[data-type="x"] { border-color: rgba(59,130,246,0.5); }
+        .gpad-btn[data-type="x"]:active { background: rgba(59,130,246,0.6); border-color: #3b82f6; }
+        .gpad-btn[data-type="y"] { border-color: rgba(245,158,11,0.5); }
+        .gpad-btn[data-type="y"]:active { background: rgba(245,158,11,0.6); border-color: #f59e0b; }
+        
+        .gpad-btn[data-type="dpad"] { border-radius: 10px; }
+        .gpad-btn[data-type="trigger"] { border-radius: 12px; width: 80px; height: 35px; }
+        .gpad-btn[data-type="bumper"] { border-radius: 14px; }
+        
+        /* ============ TOOLBAR ============ */
+        .gamepad-toolbar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 10001;
+        }
+        .toolbar-btn {
+            width: 36px; height: 36px;
             border-radius: 50%;
-            background: rgba(99,102,241,0.6);
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.05s;
-            border: 2px solid #818cf8;
-        }
-        
-        .dpad {
-            display: grid;
-            grid-template-columns: 50px 50px 50px;
-            grid-template-rows: 50px 50px 50px;
-            gap: 2px;
-        }
-        .dpad-btn {
-            width: 50px; height: 50px;
-            border-radius: 10px;
-            border: 1px solid rgba(99,102,241,0.4);
-            background: rgba(21,21,48,0.8);
-            color: #e0e0e0;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .dpad-btn:active { background: rgba(99,102,241,0.5); }
-        .dpad-empty { background: transparent; border: none; }
-        
-        .controls-bar {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 8px;
-        }
-        .ctrl-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
             border: 1px solid rgba(99,102,241,0.4);
             background: rgba(21,21,48,0.8);
             color: #888;
-            font-size: 11px;
+            font-size: 16px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             backdrop-filter: blur(5px);
         }
-        .ctrl-btn.active { background: rgba(99,102,241,0.4); color: #fff; border-color: #818cf8; }
+        .toolbar-btn.active { background: rgba(99,102,241,0.4); color: #fff; }
         
-        .hidden { display: none !important; }
-        .opacity-50 { opacity: 0.5; }
+        /* ============ MOUSE AREA ============ */
+        .mouse-area {
+            position: absolute;
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 8px;
+            pointer-events: auto;
+            z-index: 9998;
+        }
+        .mouse-area.active { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.05); }
+        
+        /* ============ NOTIFICATIONS ============ */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(99,102,241,0.9);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 10002;
+            animation: fadeInOut 2s;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
-    <div class="gamepad-container" id="gamepad">
-        <!-- Controls Bar -->
-        <div class="controls-bar">
-            <button class="ctrl-btn active" id="btnToggle" onclick="toggleGamepad()">🎮 Hide</button>
-            <button class="ctrl-btn" onclick="toggleOpacity()">👁 Opacity</button>
-            <button class="ctrl-btn" onclick="toggleVibrate()">📳 Vibrate</button>
-            <button class="ctrl-btn" id="btnMode" onclick="toggleMode()">🎯 FPS Mode</button>
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <h2>⚙️ Gamepad Settings</h2>
+        
+        <h3>🎮 Visibility</h3>
+        <div class="setting-row">
+            <label>Show Gamepad</label>
+            <input type="checkbox" id="setVisible" checked onchange="applySettings()">
+        </div>
+        <div class="setting-row">
+            <label>Opacity</label>
+            <input type="range" id="setOpacity" min="30" max="100" value="75" oninput="applySettings()">
+        </div>
+        <div class="setting-row">
+            <label>Button Size</label>
+            <input type="range" id="setSize" min="60" max="150" value="100" oninput="applySettings()">
         </div>
         
-        <!-- Bumpers -->
-        <div class="gamepad-row">
-            <button class="btn btn-sm" id="lb" ontouchstart="press('lb')" ontouchend="release('lb')" onmousedown="press('lb')" onmouseup="release('lb')">LB</button>
-            <button class="btn btn-sm" id="rb" ontouchstart="press('rb')" ontouchend="release('rb')" onmousedown="press('rb')" onmouseup="release('rb')">RB</button>
+        <h3>🕹 Button Mapping</h3>
+        <div class="setting-row"><label>Btn A →</label><input type="text" id="mapA" value="Enter" placeholder="Key"></div>
+        <div class="setting-row"><label>Btn B →</label><input type="text" id="mapB" value="Escape" placeholder="Key"></div>
+        <div class="setting-row"><label>Btn X →</label><input type="text" id="mapX" value="Space" placeholder="Key"></div>
+        <div class="setting-row"><label>Btn Y →</label><input type="text" id="mapY" value="Tab" placeholder="Key"></div>
+        <div class="setting-row"><label>D-Pad ↑ →</label><input type="text" id="mapUp" value="ArrowUp" placeholder="Key"></div>
+        <div class="setting-row"><label>D-Pad ↓ →</label><input type="text" id="mapDown" value="ArrowDown" placeholder="Key"></div>
+        <div class="setting-row"><label>D-Pad ← →</label><input type="text" id="mapLeft" value="ArrowLeft" placeholder="Key"></div>
+        <div class="setting-row"><label>D-Pad → →</label><input type="text" id="mapRight" value="ArrowRight" placeholder="Key"></div>
+        <div class="setting-row"><label>LB →</label><input type="text" id="mapLB" value="Shift" placeholder="Key"></div>
+        <div class="setting-row"><label>RB →</label><input type="text" id="mapRB" value="Ctrl" placeholder="Key"></div>
+        <div class="setting-row"><label>LT →</label><input type="text" id="mapLT" value="MouseLeft" placeholder="Mouse button"></div>
+        <div class="setting-row"><label>RT →</label><input type="text" id="mapRT" value="MouseRight" placeholder="Mouse button"></div>
+        <div class="setting-row"><label>Start →</label><input type="text" id="mapStart" value="Enter" placeholder="Key"></div>
+        <div class="setting-row"><label>Select →</label><input type="text" id="mapSelect" value="Escape" placeholder="Key"></div>
+        
+        <h3>🖱 Mouse Settings</h3>
+        <div class="setting-row">
+            <label>Mouse Area</label>
+            <input type="checkbox" id="setMouseArea" checked onchange="applySettings()">
+        </div>
+        <div class="setting-row">
+            <label>Sensitivity</label>
+            <input type="range" id="setSensitivity" min="5" max="50" value="15" oninput="applySettings()">
         </div>
         
-        <!-- Main Row: D-Pad + Center + ABXY -->
-        <div class="gamepad-row">
-            <!-- D-Pad -->
-            <div class="dpad">
-                <div class="dpad-empty"></div>
-                <button class="dpad-btn" id="dpad_up" ontouchstart="press('dpad_up')" ontouchend="release('dpad_up')">▲</button>
-                <div class="dpad-empty"></div>
-                <button class="dpad-btn" id="dpad_left" ontouchstart="press('dpad_left')" ontouchend="release('dpad_left')">◄</button>
-                <div class="dpad-empty"></div>
-                <button class="dpad-btn" id="dpad_right" ontouchstart="press('dpad_right')" ontouchend="release('dpad_right')">►</button>
-                <div class="dpad-empty"></div>
-                <button class="dpad-btn" id="dpad_down" ontouchstart="press('dpad_down')" ontouchend="release('dpad_down')">▼</button>
-                <div class="dpad-empty"></div>
-            </div>
-            
-            <!-- Center buttons -->
-            <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
-                <button class="btn btn-sm" id="select" ontouchstart="press('select')" ontouchend="release('select')">◀</button>
-                <button class="btn btn-sm" id="start" ontouchstart="press('start')" ontouchend="release('start')">▶</button>
-            </div>
-            
-            <!-- ABXY -->
-            <div style="display:grid;grid-template-columns:55px 55px 55px;grid-template-rows:55px 55px 55px;gap:2px">
-                <div></div>
-                <button class="btn btn-y" id="btn_y" ontouchstart="press('btn_y')" ontouchend="release('btn_y')">Y</button>
-                <div></div>
-                <button class="btn btn-x" id="btn_x" ontouchstart="press('btn_x')" ontouchend="release('btn_x')">X</button>
-                <div></div>
-                <button class="btn btn-b" id="btn_b" ontouchstart="press('btn_b')" ontouchend="release('btn_b')">B</button>
-                <div></div>
-                <button class="btn btn-a" id="btn_a" ontouchstart="press('btn_a')" ontouchend="release('btn_a')">A</button>
-                <div></div>
-            </div>
-        </div>
-        
-        <!-- Triggers -->
-        <div class="gamepad-row">
-            <button class="btn btn-sm" id="lt" ontouchstart="press('lt')" ontouchend="release('lt')" onmousedown="press('lt')" onmouseup="release('lt')">LT</button>
-            <button class="btn btn-sm" id="rt" ontouchstart="press('rt')" ontouchend="release('rt')" onmousedown="press('rt')" onmouseup="release('rt')">RT</button>
+        <div class="btn-row">
+            <button class="btn btn-save" onclick="saveSettings()">💾 Save</button>
+            <button class="btn btn-reset" onclick="resetSettings()">↺ Reset</button>
+            <button class="btn btn-close" onclick="toggleSettings()">✕ Close</button>
         </div>
     </div>
     
-    <!-- Minimized toggle button -->
-    <button class="btn btn-sm hidden" id="btnShow" onclick="toggleGamepad()" 
-            style="position:fixed;bottom:20px;right:20px;z-index:9999;width:45px;height:45px;font-size:20px">
-        🎮
-    </button>
+    <!-- Toolbar -->
+    <div class="gamepad-toolbar">
+        <button class="toolbar-btn" onclick="toggleSettings()" title="Settings">⚙️</button>
+        <button class="toolbar-btn" onclick="toggleGamepad()" title="Hide/Show">👁</button>
+        <button class="toolbar-btn" id="btnEditMode" onclick="toggleEditMode()" title="Edit Layout">✋</button>
+        <button class="toolbar-btn" onclick="resetPositions()" title="Reset Positions">↺</button>
+    </div>
+    
+    <!-- Mouse Area -->
+    <div class="mouse-area" id="mouseArea"></div>
+    
+    <!-- Gamepad Buttons -->
+    <div class="gamepad-overlay active" id="gamepadOverlay">
+        <!-- Will be populated by JS -->
+    </div>
 
     <script>
-        let gamepadVisible = true;
-        let opacityReduced = false;
-        let vibrateEnabled = true;
-        let fpsMode = false;
+        // ==================== CONFIGURATION ====================
+        const DEFAULT_CONFIG = {
+            visible: true,
+            opacity: 0.75,
+            size: 100,
+            mouseArea: true,
+            sensitivity: 15,
+            buttons: {
+                btn_a:     { x: 78, y: 55, w: 55, h: 55, key: 'Enter',    type: 'a',      label: 'A', icon: '' },
+                btn_b:     { x: 88, y: 45, w: 55, h: 55, key: 'Escape',   type: 'b',      label: 'B', icon: '' },
+                btn_x:     { x: 68, y: 45, w: 55, h: 55, key: 'Space',    type: 'x',      label: 'X', icon: '' },
+                btn_y:     { x: 78, y: 35, w: 55, h: 55, key: 'Tab',      type: 'y',      label: 'Y', icon: '' },
+                dpad_up:   { x: 15, y: 45, w: 45, h: 45, key: 'ArrowUp',    type: 'dpad',   label: '▲', icon: '' },
+                dpad_down: { x: 15, y: 65, w: 45, h: 45, key: 'ArrowDown',  type: 'dpad',   label: '▼', icon: '' },
+                dpad_left: { x: 7,  y: 55, w: 45, h: 45, key: 'ArrowLeft',  type: 'dpad',   label: '◄', icon: '' },
+                dpad_right:{ x: 23, y: 55, w: 45, h: 45, key: 'ArrowRight', type: 'dpad',   label: '►', icon: '' },
+                lb:        { x: 5,  y: 20, w: 70, h: 30, key: 'Shift',     type: 'bumper', label: 'LB', icon: '' },
+                rb:        { x: 70, y: 20, w: 70, h: 30, key: 'Ctrl',      type: 'bumper', label: 'RB', icon: '' },
+                lt:        { x: 2,  y: 8,  w: 65, h: 28, key: 'MouseLeft', type: 'trigger',label: 'LT', icon: '' },
+                rt:        { x: 78, y: 8,  w: 65, h: 28, key: 'MouseRight',type: 'trigger',label: 'RT', icon: '' },
+                start:     { x: 45, y: 70, w: 40, h: 40, key: 'Enter',    type: '',       label: '▶', icon: '' },
+                select:    { x: 38, y: 70, w: 40, h: 40, key: 'Escape',   type: '',       label: '◀', icon: '' },
+            }
+        };
         
-        // Send button state to server
-        function sendState(button, pressed) {
-            const event = {
-                type: 'gamepad',
-                button: button,
-                pressed: pressed,
-                timestamp: Date.now()
-            };
-            
-            // Send via WebSocket or HTTP
-            if (window.nexusClient && window.nexusClient.sendFrame) {
-                window.nexusClient.sendFrame(JSON.stringify(event));
-            }
-            
-            // Also try postMessage for iframe
-            if (window.parent) {
-                window.parent.postMessage(event, '*');
-            }
-            
-            // Vibrate on press
-            if (vibrateEnabled && pressed && navigator.vibrate) {
-                navigator.vibrate(15);
-            }
+        let config = JSON.parse(localStorage.getItem('nexus_gamepad_config') || JSON.stringify(DEFAULT_CONFIG));
+        let editMode = false;
+        let dragging = null;
+        let dragOffset = { x: 0, y: 0 };
+        let mouseActive = false;
+        let lastMousePos = { x: 0, y: 0 };
+        
+        // ==================== INIT ====================
+        function init() {
+            applySettings();
+            renderButtons();
+            setupMouseArea();
+            loadIcons();
         }
         
-        function press(button) {
-            document.getElementById(button)?.classList.add('pressed');
-            sendState(button, true);
+        function renderButtons() {
+            const container = document.getElementById('gamepadOverlay');
+            container.innerHTML = '';
+            
+            Object.entries(config.buttons).forEach(([id, btn]) => {
+                const el = document.createElement('div');
+                el.className = 'gpad-btn';
+                el.id = id;
+                el.dataset.type = btn.type;
+                el.textContent = btn.label;
+                
+                if (btn.icon) {
+                    el.style.backgroundImage = url();
+                    el.textContent = '';
+                }
+                
+                updateButtonPosition(el, btn);
+                
+                // Touch events
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); pressButton(id); });
+                el.addEventListener('touchend', (e) => { e.preventDefault(); releaseButton(id); });
+                el.addEventListener('touchcancel', () => releaseButton(id));
+                
+                // Mouse events
+                el.addEventListener('mousedown', (e) => { e.preventDefault(); pressButton(id); });
+                el.addEventListener('mouseup', () => releaseButton(id));
+                el.addEventListener('mouseleave', () => releaseButton(id));
+                
+                // Drag in edit mode
+                if (editMode) {
+                    el.style.cursor = 'move';
+                    el.addEventListener('touchstart', (e) => startDrag(e, id, btn));
+                    el.addEventListener('mousedown', (e) => startDrag(e, id, btn));
+                }
+                
+                container.appendChild(el);
+            });
         }
         
-        function release(button) {
-            document.getElementById(button)?.classList.remove('pressed');
-            sendState(button, false);
+        function updateButtonPosition(el, btn) {
+            const sizeMultiplier = config.size / 100;
+            const vw = window.innerWidth / 100;
+            const vh = window.innerHeight / 100;
+            
+            el.style.left = (btn.x * vw - (btn.w * sizeMultiplier / 2)) + 'px';
+            el.style.top = (btn.y * vh - (btn.h * sizeMultiplier / 2)) + 'px';
+            el.style.width = (btn.w * sizeMultiplier) + 'px';
+            el.style.height = (btn.h * sizeMultiplier) + 'px';
+            el.style.fontSize = (14 * sizeMultiplier) + 'px';
+        }
+        
+        function applySettings() {
+            config.visible = document.getElementById('setVisible')?.checked ?? config.visible;
+            config.opacity = parseInt(document.getElementById('setOpacity')?.value || 75) / 100;
+            config.size = parseInt(document.getElementById('setSize')?.value || 100);
+            config.mouseArea = document.getElementById('setMouseArea')?.checked ?? config.mouseArea;
+            config.sensitivity = parseInt(document.getElementById('setSensitivity')?.value || 15);
+            
+            // Update key mappings
+            const maps = ['A','B','X','Y','Up','Down','Left','Right','LB','RB','LT','RT','Start','Select'];
+            const ids = ['btn_a','btn_b','btn_x','btn_y','dpad_up','dpad_down','dpad_left','dpad_right','lb','rb','lt','rt','start','select'];
+            ids.forEach((id, i) => {
+                const el = document.getElementById('map' + maps[i]);
+                if (el && config.buttons[id]) config.buttons[id].key = el.value;
+            });
+            
+            const overlay = document.getElementById('gamepadOverlay');
+            overlay.style.opacity = config.opacity;
+            overlay.classList.toggle('active', config.visible);
+            
+            renderButtons();
+            setupMouseArea();
+        }
+        
+        function setupMouseArea() {
+            const area = document.getElementById('mouseArea');
+            if (!config.mouseArea) {
+                area.style.display = 'none';
+                return;
+            }
+            area.style.display = 'block';
+            area.style.left = '25%';
+            area.style.top = '15%';
+            area.style.width = '50%';
+            area.style.height = '60%';
+            
+            area.addEventListener('touchstart', (e) => { mouseActive = true; lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY }; area.classList.add('active'); });
+            area.addEventListener('touchmove', (e) => {
+                if (!mouseActive) return;
+                e.preventDefault();
+                const dx = (e.touches[0].clientX - lastMousePos.x) * config.sensitivity / 10;
+                const dy = (e.touches[0].clientY - lastMousePos.y) * config.sensitivity / 10;
+                sendMouseMove(dx, dy);
+                lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+            area.addEventListener('touchend', () => { mouseActive = false; area.classList.remove('active'); });
+        }
+        
+        // ==================== BUTTON ACTIONS ====================
+        function pressButton(id) {
+            const btn = config.buttons[id];
+            if (!btn) return;
+            
+            document.getElementById(id)?.classList.add('pressed');
+            
+            const key = btn.key;
+            if (key.startsWith('Mouse')) {
+                sendMouseClick(key.replace('Mouse', '').toLowerCase());
+            } else {
+                sendKey(key, true);
+            }
+            
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+        
+        function releaseButton(id) {
+            document.getElementById(id)?.classList.remove('pressed');
+            
+            const btn = config.buttons[id];
+            if (!btn || btn.key.startsWith('Mouse')) return;
+            sendKey(btn.key, false);
+        }
+        
+        function sendKey(key, pressed) {
+            // Send to parent window (stream viewer)
+            window.parent?.postMessage({ type: 'key', key, pressed }, '*');
+            
+            // Send to server
+            fetch('/api/input', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'key', key, pressed, timestamp: Date.now() })
+            }).catch(() => {});
+        }
+        
+        function sendMouseMove(dx, dy) {
+            window.parent?.postMessage({ type: 'mouse_move', dx, dy }, '*');
+            fetch('/api/input', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'mouse_move', dx, dy })
+            }).catch(() => {});
+        }
+        
+        function sendMouseClick(button) {
+            window.parent?.postMessage({ type: 'mouse_click', button }, '*');
+        }
+        
+        // ==================== DRAG & DROP (EDIT MODE) ====================
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.getElementById('btnEditMode').classList.toggle('active', editMode);
+            showToast(editMode ? 'Edit mode: Drag buttons to reposition' : 'Edit mode off');
+            renderButtons();
+        }
+        
+        function startDrag(e, id, btn) {
+            if (!editMode) return;
+            e.preventDefault();
+            dragging = { id, btn };
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const el = document.getElementById(id);
+            const rect = el.getBoundingClientRect();
+            dragOffset = { x: clientX - rect.left, y: clientY - rect.top };
+            
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        
+        function onDrag(e) {
+            if (!dragging) return;
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const vw = window.innerWidth / 100;
+            const vh = window.innerHeight / 100;
+            
+            dragging.btn.x = Math.round((clientX - dragOffset.x + dragging.btn.w * config.size / 200) / vw);
+            dragging.btn.y = Math.round((clientY - dragOffset.y + dragging.btn.h * config.size / 200) / vh);
+            
+            updateButtonPosition(document.getElementById(dragging.id), dragging.btn);
+        }
+        
+        function stopDrag() {
+            dragging = null;
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('touchend', stopDrag);
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            saveSettings();
+        }
+        
+        // ==================== UTILS ====================
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('show');
         }
         
         function toggleGamepad() {
-            gamepadVisible = !gamepadVisible;
-            document.getElementById('gamepad').classList.toggle('hidden', !gamepadVisible);
-            document.getElementById('btnShow').classList.toggle('hidden', gamepadVisible);
-            document.getElementById('btnToggle').textContent = gamepadVisible ? '🎮 Hide' : '🎮 Show';
+            config.visible = !config.visible;
+            document.getElementById('gamepadOverlay').classList.toggle('active', config.visible);
+            document.getElementById('setVisible').checked = config.visible;
+            showToast(config.visible ? 'Gamepad shown' : 'Gamepad hidden');
         }
         
-        function toggleOpacity() {
-            opacityReduced = !opacityReduced;
-            document.getElementById('gamepad').classList.toggle('opacity-50', opacityReduced);
+        function resetPositions() {
+            config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            applySettings();
+            showToast('Positions reset');
         }
         
-        function toggleVibrate() {
-            vibrateEnabled = !vibrateEnabled;
+        function resetSettings() {
+            config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            applySettings();
+            populateSettingsForm();
+            showToast('Settings reset to default');
         }
         
-        function toggleMode() {
-            fpsMode = !fpsMode;
-            document.getElementById('btnMode').textContent = fpsMode ? '🎯 RPG Mode' : '🎯 FPS Mode';
-            document.getElementById('btnMode').classList.toggle('active', fpsMode);
+        function saveSettings() {
+            // Save button positions
+            Object.entries(config.buttons).forEach(([id, btn]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    const vw = window.innerWidth / 100;
+                    const vh = window.innerHeight / 100;
+                    btn.x = Math.round((rect.left + rect.width/2) / vw);
+                    btn.y = Math.round((rect.top + rect.height/2) / vh);
+                }
+            });
+            
+            // Save key mappings
+            applySettings();
+            
+            localStorage.setItem('nexus_gamepad_config', JSON.stringify(config));
+            showToast('Settings saved!');
         }
         
-        // Prevent zoom on double tap
-        document.addEventListener('dblclick', function(e) { e.preventDefault(); }, {passive: false});
+        function populateSettingsForm() {
+            document.getElementById('setVisible').checked = config.visible;
+            document.getElementById('setOpacity').value = Math.round(config.opacity * 100);
+            document.getElementById('setSize').value = config.size;
+            document.getElementById('setMouseArea').checked = config.mouseArea;
+            document.getElementById('setSensitivity').value = config.sensitivity;
+            
+            const maps = ['A','B','X','Y','Up','Down','Left','Right','LB','RB','LT','RT','Start','Select'];
+            const ids = ['btn_a','btn_b','btn_x','btn_y','dpad_up','dpad_down','dpad_left','dpad_right','lb','rb','lt','rt','start','select'];
+            maps.forEach((m, i) => {
+                const el = document.getElementById('map' + m);
+                if (el && config.buttons[ids[i]]) el.value = config.buttons[ids[i]].key;
+            });
+        }
         
-        // Prevent context menu
-        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
         
-        // Prevent scrolling
-        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, {passive: false});
+        function loadIcons() {
+            // Load button icons (placeholders - replace with actual icons)
+            const iconMap = {
+                btn_a: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="%2322c55e"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="14" font-weight="bold">A</text></svg>',
+                btn_b: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="%23ef4444"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="14" font-weight="bold">B</text></svg>',
+            };
+            
+            Object.entries(iconMap).forEach(([id, icon]) => {
+                if (config.buttons[id]) config.buttons[id].icon = icon;
+            });
+        }
+        
+        // ==================== START ====================
+        populateSettingsForm();
+        init();
     </script>
 </body>
 </html>
