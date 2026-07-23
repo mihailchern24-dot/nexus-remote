@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,13 +35,13 @@ label { color:#ccc; font-size:10px; display:block; margin:4px 0 2px; }
 <body>
 
 <div id="bar">
-    <button class="tbtn edit" id="editBtn" onclick="toggleEdit()" title="Edit Mode">✋</button>
-    <button class="tbtn settings" onclick="togglePanel()" title="Settings">⚙️</button>
+    <button class="tbtn edit" id="editBtn" onclick="toggleEdit()" title="Edit Mode">?</button>
+    <button class="tbtn settings" onclick="togglePanel()" title="Settings">??</button>
 </div>
 
 <div id="panel">
-    <button style="position:absolute;top:10px;right:10px;width:35px;height:35px;border-radius:50%;background:#ef4444;color:#fff;font-size:16px;border:none;cursor:pointer" onclick="togglePanel()">✕</button>
-    <h2>🎮 Gamepad Settings</h2>
+    <button style="position:absolute;top:10px;right:10px;width:35px;height:35px;border-radius:50%;background:#ef4444;color:#fff;font-size:16px;border:none;cursor:pointer" onclick="togglePanel()">?</button>
+    <h2>?? Gamepad Settings</h2>
     
     <select id="elemSelect" onchange="selectElem()" style="width:100%;padding:8px;border-radius:6px;background:#151530;color:#fff;border:1px solid #2a2a4a;font-size:12px;margin-bottom:10px">
         <option value="">-- Choose element --</option>
@@ -66,20 +66,20 @@ label { color:#ccc; font-size:10px; display:block; margin:4px 0 2px; }
         <label>Size: <b id="sizeVal">55</b>px</label>
         <input type="range" id="elemSize" min="30" max="200" value="55" oninput="document.getElementById('sizeVal').textContent=this.value">
         
-        <button class="btn btn-blue" onclick="applyElem()" style="width:100%;margin-top:8px">✅ Apply</button>
-        <button class="btn btn-red" onclick="deleteElem()" style="width:100%;margin-top:4px">🗑 Delete</button>
+        <button class="btn btn-blue" onclick="applyElem()" style="width:100%;margin-top:8px">? Apply</button>
+        <button class="btn btn-red" onclick="deleteElem()" style="width:100%;margin-top:4px">?? Delete</button>
     </div>
     
     <h3>Add Elements</h3>
-    <button class="btn btn-green" onclick="addBtn()">➕ Add Button</button>
-    <button class="btn btn-blue" onclick="addStick()">🕹 Add Stick</button>
+    <button class="btn btn-green" onclick="addBtn()">? Add Button</button>
+    <button class="btn btn-blue" onclick="addStick()">?? Add Stick</button>
     
     <h3>Mouse Area</h3>
     <label><input type="checkbox" id="showMouse" checked onchange="document.getElementById('mouseArea').style.display=this.checked?'block':'none'"> Show</label>
     <label>Sensitivity</label>
     <input type="range" id="mouseSens" min="5" max="50" value="15">
     
-    <button class="btn btn-blue" style="width:100%;margin-top:12px;padding:12px" onclick="save();togglePanel()">💾 Save & Close</button>
+    <button class="btn btn-blue" style="width:100%;margin-top:12px;padding:12px" onclick="save();togglePanel()">?? Save & Close</button>
 </div>
 
 <div class="ma" id="mouseArea"></div>
@@ -98,15 +98,15 @@ try { var s = localStorage.getItem('nexus_gpad_v7'); if (s) els = JSON.parse(s);
 if (!els.length) {
     els = [
         {id:'a',t:'button',x:80,y:58,w:55,h:55,k:'Enter',l:'A',c:'#22c55e'},
-        {id:'b',t:'button',x:90,y:46,w:55,h:55,k:'Escape',l:'B',c:'#ef4444'},
-        {id:'x',t:'button',x:66,y:46,w:55,h:55,k:'Space',l:'X',c:'#3b82f6'},
+        {id:'b',t:'button',x:88,y:46,w:55,h:55,k:'Escape',l:'B',c:'#ef4444'},
+        {id:'x',t:'button',x:64,y:46,w:55,h:55,k:'Space',l:'X',c:'#3b82f6'},
         {id:'y',t:'button',x:78,y:34,w:55,h:55,k:'Tab',l:'Y',c:'#f59e0b'},
-        {id:'du',t:'button',x:18,y:38,w:40,h:40,k:'ArrowUp',l:'▲',c:'#6366f1'},
-        {id:'dd',t:'button',x:18,y:68,w:40,h:40,k:'ArrowDown',l:'▼',c:'#6366f1'},
-        {id:'dl',t:'button',x:6,y:53,w:40,h:40,k:'ArrowLeft',l:'◄',c:'#6366f1'},
-        {id:'dr',t:'button',x:30,y:53,w:40,h:40,k:'ArrowRight',l:'►',c:'#6366f1'},
+        {id:'du',t:'button',x:18,y:38,w:40,h:40,k:'ArrowUp',l:'^',c:'#6366f1'},
+        {id:'dd',t:'button',x:18,y:68,w:40,h:40,k:'ArrowDown',l:'�',c:'#6366f1'},
+        {id:'dl',t:'button',x:6,y:53,w:40,h:40,k:'ArrowLeft',l:'<',c:'#6366f1'},
+        {id:'dr',t:'button',x:32,y:53,w:40,h:40,k:'ArrowRight',l:'>',c:'#6366f1'},
         {id:'lb',t:'button',x:8,y:16,w:65,h:28,k:'Shift',l:'LB',c:'#6366f1'},
-        {id:'rb',t:'button',x:72,y:16,w:65,h:28,k:'Ctrl',l:'RB',c:'#6366f1'},
+        {id:'rb',t:'button',x:68,y:16,w:65,h:28,k:'Ctrl',l:'RB',c:'#6366f1'},
     ];
 }
 
@@ -131,7 +131,7 @@ function render() {
             var el = els[i];
             var d = document.createElement('div');
             d.className = 'gpad' + (edit ? ' edit' : '');
-            d.textContent = el.l || (el.t=='stick'?'🕹':'');
+            d.textContent = el.l || (el.t=='stick'?'??':'');
             d.style.borderColor = el.c;
             d.style.backgroundColor = el.c + '33';
             d.style.left = Math.round(el.x*vw - el.w/2) + 'px';
@@ -148,7 +148,7 @@ function render() {
             }
             
             var rh = document.createElement('div'); rh.className = 'rh';
-            var dh = document.createElement('div'); dh.className = 'dh'; dh.textContent = '×';
+            var dh = document.createElement('div'); dh.className = 'dh'; dh.textContent = '?';
             d.appendChild(rh); d.appendChild(dh);
             
             // MOVE events on the button itself
@@ -206,7 +206,7 @@ function toggleEdit() {
     edit = !edit;
     var b = document.getElementById('editBtn');
     b.classList.toggle('active', edit);
-    b.textContent = edit ? '✅' : '✋';
+    b.textContent = edit ? '?' : '?';
     render();
     toast(edit ? 'Edit Mode: Drag buttons, drag corner to resize' : 'Game Mode');
 }
@@ -217,7 +217,7 @@ function updateList() {
     var s = document.getElementById('elemSelect');
     s.innerHTML = '<option value="">-- ' + els.length + ' elements --</option>';
     for (var i = 0; i < els.length; i++) {
-        s.innerHTML += '<option value="'+els[i].id+'">'+(els[i].t=='stick'?'🕹':'🔘')+' '+(els[i].l||els[i].id)+' ('+els[i].w+'px)</option>';
+        s.innerHTML += '<option value="'+els[i].id+'">'+(els[i].t=='stick'?'??':'??')+' '+(els[i].l||els[i].id)+' ('+els[i].w+'px)</option>';
     }
 }
 
@@ -294,7 +294,7 @@ function addStick() {
     var id = 's_' + Date.now();
     var x = 25 + Math.random() * 30;
     var y = 40 + Math.random() * 30;
-    els.push({id:id, t:'stick', x:x, y:y, w:90, h:90, ks:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'}, l:'🕹', c:'#6366f1'});
+    els.push({id:id, t:'stick', x:x, y:y, w:90, h:90, ks:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'}, l:'??', c:'#6366f1'});
     render(); updateList(); save();
     toast('Stick added at (' + Math.round(x) + '%, ' + Math.round(y) + '%)');
 }
@@ -315,3 +315,4 @@ render(); fillKeys();
 </script>
 </body>
 </html>
+
