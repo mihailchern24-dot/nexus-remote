@@ -3,154 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Remote - Login</title>
+    <title>Nexus Remote - Secure Remote Desktop & Streaming</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a0a1a, #1a1a3e);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
             color: #e0e0e0;
-            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        nav {
+            background: rgba(10,10,26,0.95);
+            border-bottom: 1px solid #1a1a3e;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
         }
-        .login-card {
-            background: rgba(26, 26, 46, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            width: 400px;
-            border: 1px solid #2a2a4a;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        h1 {
-            text-align: center;
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
             background: linear-gradient(135deg, #6366f1, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 28px;
-            margin-bottom: 8px;
         }
-        .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 30px; }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; margin-bottom: 6px; color: #888; font-size: 12px; }
-        .input-group input {
-            width: 100%; padding: 12px 16px; border-radius: 10px;
-            border: 1px solid #2a2a4a; background: #0f0f1a; color: #fff; font-size: 14px;
-            transition: border-color 0.3s;
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
         }
-        .input-group input:focus { outline: none; border-color: #6366f1; }
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 10px;
-            font-size: 14px; font-weight: 600; cursor: pointer; margin: 6px 0;
+        .nav-links a:hover { color: #fff; }
+        .btn-nav {
+            padding: 8px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
             transition: all 0.3s;
         }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-primary:hover { background: #5558e6; }
-        .btn-google { background: #4285f4; color: #fff; }
-        .btn-github { background: #333; color: #fff; }
-        .divider { text-align: center; color: #666; margin: 16px 0; }
-        .divider::before, .divider::after { content: " — "; }
-        .links { text-align: center; margin-top: 16px; font-size: 13px; }
-        .links a { color: #6366f1; text-decoration: none; }
-        .links a:hover { text-decoration: underline; }
-        .error { color: #ef4444; font-size: 12px; text-align: center; margin-top: 8px; display: none; }
-        .success { color: #22c55e; font-size: 12px; text-align: center; margin-top: 8px; display: none; }
+        .btn-login { background: transparent; border: 1px solid #6366f1; color: #6366f1; }
+        .btn-login:hover { background: #6366f1; color: #fff; }
+        .btn-signup { background: #6366f1; color: #fff; }
+        .btn-signup:hover { background: #5558e6; }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 100px 20px 60px;
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 70%);
+        }
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366f1, #818cf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .hero p {
+            font-size: 20px;
+            color: #888;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; }
+        .btn-hero {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn-hero-primary { background: #6366f1; color: #fff; }
+        .btn-hero-primary:hover { background: #5558e6; transform: translateY(-2px); }
+        .btn-hero-secondary { background: transparent; border: 2px solid #6366f1; color: #6366f1; }
+        .btn-hero-secondary:hover { background: #6366f1; color: #fff; }
+        
+        /* Features */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+        .section-subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 60px;
+            font-size: 18px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .feature-card {
+            background: #151530;
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 40px rgba(99,102,241,0.2);
+        }
+        .feature-icon { font-size: 40px; margin-bottom: 16px; }
+        .feature-card h3 { font-size: 20px; margin-bottom: 10px; color: #fff; }
+        .feature-card p { color: #888; font-size: 14px; }
+        
+        /* Platforms */
+        .platforms {
+            background: #0d0d24;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .platform-icons {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        .platform-item {
+            text-align: center;
+            font-size: 48px;
+        }
+        .platform-item span {
+            display: block;
+            font-size: 14px;
+            color: #888;
+            margin-top: 8px;
+        }
+        
+        /* CTA */
+        .cta {
+            text-align: center;
+            padding: 80px 20px;
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 70%);
+        }
+        .cta h2 { font-size: 36px; margin-bottom: 16px; }
+        .cta p { color: #888; font-size: 18px; margin-bottom: 30px; }
+        
+        /* Footer */
+        footer {
+            background: #0d0d24;
+            border-top: 1px solid #1a1a3e;
+            padding: 40px 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        footer a { color: #6366f1; text-decoration: none; }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .hero p { font-size: 16px; }
+            .nav-links { display: none; }
+            .features-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <h1>🔐 Nexus Remote</h1>
-        <p class="subtitle">Sign in to your account</p>
-        
-        <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="your@email.com" autofocus>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">⚡ Nexus Remote</div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#platforms">Platforms</a>
+                <a href="#download">Download</a>
+                <a href="/login" class="btn-nav btn-login">Sign In</a>
+                <a href="/register" class="btn-nav btn-signup">Get Started</a>
+            </div>
         </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="••••••••">
-        </div>
-        
-        <p class="error" id="error">Invalid credentials</p>
-        <p class="success" id="success">Login successful!</p>
-        
-        <button class="btn btn-primary" onclick="login()">Sign In</button>
-        
-        <div class="divider">or</div>
-        
-        <button class="btn btn-google" onclick="oauthLogin('google')">🔵 Sign in with Google</button>
-        <button class="btn btn-github" onclick="oauthLogin('github')">🐙 Sign in with GitHub</button>
-        
-        <div class="links">
-            <a href="/register">Create account</a> &nbsp;•&nbsp;
-            <a href="/reset">Forgot password?</a>
-        </div>
-    </div>
+    </nav>
 
-    <script>
-        const API = '/api/auth';
+    <section class="hero">
+        <h1>Remote Desktop<br>Reimagined</h1>
+        <p>Access any device from anywhere. Secure, fast, and encrypted. Connect Windows, Mac, Linux, Android, iOS, and even game consoles.</p>
+        <div class="hero-buttons">
+            <a href="/register" class="btn-hero btn-hero-primary">Get Started Free</a>
+            <a href="#features" class="btn-hero btn-hero-secondary">Learn More</a>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <h2 class="section-title">Why Nexus Remote?</h2>
+        <p class="section-subtitle">Everything you need for remote access and streaming</p>
         
-        async function login() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!email || !password) {
-                return showMsg('Please fill all fields', 'error');
-            }
-            
-            try {
-                const resp = await fetch(API + '/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
-                });
-                const data = await resp.json();
-                
-                if (data.token) {
-                    // Сохраняем токен для UI клиента
-                    localStorage.setItem('nexus_token', data.token);
-                    localStorage.setItem('nexus_peer_id', data.peer_id);
-                    localStorage.setItem('nexus_email', email);
-                    
-                    showMsg('Login successful! Redirecting to app...', 'success');
-                    
-                    // еренаправляем в схему nexus:// для открытия UI клиента
-                    setTimeout(() => {
-                        window.location.href = 
-exus://login?token=&peer_id=&email=;
-                    }, 1000);
-                } else {
-                    showMsg(data.error || 'Login failed', 'error');
-                }
-            } catch(e) {
-                showMsg('Connection error', 'error');
-            }
-        }
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>End-to-End Encryption</h3>
+                <p>AES-256-GCM encryption with Diffie-Hellman key exchange. Your data stays private.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📺</div>
+                <h3>4K Streaming</h3>
+                <p>Stream at up to 4K 60fps with hardware encoding. H.264, H.265, and AV1 support.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h3>Game Streaming</h3>
+                <p>Play your PC games anywhere. Virtual gamepad with auto-hide support.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📁</div>
+                <h3>File Transfer</h3>
+                <p>Drag & drop files between any devices. Cloud storage integration included.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔗</div>
+                <h3>Multi-Device</h3>
+                <p>Connect to multiple devices simultaneously. Switch between them like browser tabs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡</div>
+                <h3>Two-Factor Auth</h3>
+                <p>MFA with Google Authenticator. Whitelist trusted devices. Full audit logging.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="platforms" id="platforms">
+        <h2 class="section-title">All Your Devices</h2>
+        <p class="section-subtitle">One app for everything</p>
         
-        function oauthLogin(provider) {
-            fetch(API + '/oauth', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({provider})
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.url) window.location.href = data.url;
-            });
-        }
-        
-        function showMsg(msg, type) {
-            const el = document.getElementById(type);
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
-        }
-        
-        // Enter key
-        document.getElementById('password').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') login();
-        });
-    </script>
+        <div class="platform-icons">
+            <div class="platform-item">
+                🖥<span>Windows</span>
+            </div>
+            <div class="platform-item">
+                🐧<span>Linux</span>
+            </div>
+            <div class="platform-item">
+                🍎<span>macOS</span>
+            </div>
+            <div class="platform-item">
+                📱<span>Android</span>
+            </div>
+            <div class="platform-item">
+                📱<span>iOS</span>
+            </div>
+            <div class="platform-item">
+                🎮<span>PS5/Xbox</span>
+            </div>
+            <div class="platform-item">
+                📺<span>Android TV</span>
+            </div>
+            <div class="platform-item">
+                🚗<span>Android Auto</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta" id="download">
+        <h2>Ready to Get Started?</h2>
+        <p>Create your free account and connect your first device in under 2 minutes.</p>
+        <a href="/register" class="btn-hero btn-hero-primary">Create Free Account</a>
+    </section>
+
+    <footer>
+        <p>© 2026 Nexus Remote. <a href="/login">Sign In</a> · <a href="/register">Register</a> · <a href="/reset">Reset Password</a></p>
+        <p style="margin-top:8px">End-to-end encrypted · Open source · No data collection</p>
+    </footer>
 </body>
 </html>
