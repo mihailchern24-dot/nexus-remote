@@ -7,10 +7,8 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { 
-            font-family: Arial, sans-serif; 
-            background: rgba(0,0,0,0.2); 
-            overflow: hidden; 
-            touch-action: manipulation;
+            font-family: Arial, sans-serif; background: rgba(0,0,0,0.2); 
+            overflow: hidden; touch-action: manipulation;
             position: fixed; top:0; left:0; right:0; bottom:0;
         }
         #settingsBtn {
@@ -20,6 +18,14 @@
             border: none; cursor: pointer; z-index: 99999;
             display: flex; align-items: center; justify-content: center;
         }
+        #editBtn {
+            position: fixed; top: 15px; right: 75px;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #f59e0b; color: white; font-size: 24px;
+            border: none; cursor: pointer; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #editBtn.active { background: #22c55e; }
         #settingsPanel {
             position: fixed; top: 10px; left: 10px; right: 10px; bottom: 10px;
             background: #0a0a1a; color: white; z-index: 99998;
@@ -50,6 +56,7 @@
         .btn-green { background: #22c55e; color: white; }
         .btn-red { background: #ef4444; color: white; }
         .btn-gray { background: #333; color: white; }
+        
         .gpad-btn {
             position: absolute; border-radius: 50%;
             border: 2px solid rgba(99,102,241,0.6);
@@ -57,16 +64,43 @@
             color: white; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; z-index: 9999; font-size: 14px;
+            transition: transform 0.05s;
         }
-        .gpad-btn:active { background: rgba(99,102,241,0.8); transform: scale(0.85); }
+        .gpad-btn:active { transform: scale(0.85) !important; }
+        .gpad-btn.edit-mode { cursor: move !important; border-style: dashed !important; }
+        .gpad-btn.edit-mode:hover { border-color: #f59e0b !important; background: rgba(245,158,11,0.2) !important; }
+        .gpad-btn .resize-handle {
+            position: absolute; bottom: -6px; right: -6px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #f59e0b; border: 2px solid white;
+            cursor: nwse-resize; display: none; z-index: 1;
+        }
+        .gpad-btn.edit-mode .resize-handle { display: block !important; }
+        .gpad-btn .delete-handle {
+            position: absolute; top: -6px; right: -6px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #ef4444; border: 2px solid white;
+            cursor: pointer; display: none; z-index: 1;
+            font-size: 10px; color: white; text-align: center; line-height: 18px;
+        }
+        .gpad-btn.edit-mode .delete-handle { display: block !important; }
+        
         .mouse-area {
             position: absolute; border: 1px dashed rgba(255,255,255,0.15);
             border-radius: 10px; z-index: 9998;
         }
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #6366f1; color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 12px; z-index: 100000;
+            pointer-events: none; animation: fadeOut 2s forwards;
+        }
+        @keyframes fadeOut { 0%,70%{opacity:1} 100%{opacity:0} }
     </style>
 </head>
 <body>
 
+    <button id="editBtn" onclick="toggleEdit()" title="Edit Mode - Drag & Resize">✋</button>
     <button id="settingsBtn" onclick="openSettings()">⚙️</button>
 
     <div id="settingsPanel">
@@ -101,25 +135,22 @@
             <h3>Appearance</h3>
             <label>Label (text on button)</label>
             <input type="text" id="elemLabel" placeholder="A" maxlength="4">
-            
             <label>Color</label>
             <input type="color" id="elemColor" value="#6366f1">
-            
-            <label>Size (pixels)</label>
-            <input type="range" id="elemSize" min="40" max="180" value="55" oninput="document.getElementById('sizeVal').textContent=this.value">
-            <span id="sizeVal" style="color:#888">55</span> px
+            <label>Size: <span id="sizeVal">55</span> px</label>
+            <input type="range" id="elemSize" min="30" max="200" value="55" oninput="document.getElementById('sizeVal').textContent=this.value">
             
             <div style="margin-top:12px">
-                <button class="btn btn-blue" onclick="applyElem()">✅ Apply Changes</button>
+                <button class="btn btn-blue" onclick="applyElem()">✅ Apply</button>
                 <button class="btn btn-red" onclick="deleteElem()">🗑 Delete</button>
             </div>
         </div>
         
-        <h3>Add New Elements</h3>
+        <h3>Add Elements</h3>
         <button class="btn btn-green" onclick="addBtn()">➕ Add Button</button>
         <button class="btn btn-blue" onclick="addStk()">🕹 Add Stick</button>
         
-        <h3>Mouse Touch Area</h3>
+        <h3>Mouse Area</h3>
         <label>Show mouse area</label>
         <input type="checkbox" id="showMouse" checked onchange="toggleMouse()" style="width:auto">
         <label>Sensitivity</label>
@@ -136,13 +167,8 @@
         var selectedId = null;
         var editMode = false;
 
-        // Load saved config
-        try {
-            var saved = localStorage.getItem('nexus_gamepad_v3');
-            if (saved) elements = JSON.parse(saved);
-        } catch(e) {}
+        try { var saved = localStorage.getItem('nexus_gamepad_v4'); if (saved) elements = JSON.parse(saved); } catch(e) {}
 
-        // Default buttons if no saved config
         if (elements.length === 0) {
             elements = [
                 {id:'a', type:'button', x:78, y:58, w:55, h:55, key:'Enter', label:'A', color:'#22c55e'},
@@ -158,39 +184,43 @@
             ];
         }
 
-        // Key options
         var keyOptions = [
-            {v:'ArrowUp',l:'Up Arrow'},{v:'ArrowDown',l:'Down Arrow'},{v:'ArrowLeft',l:'Left Arrow'},{v:'ArrowRight',l:'Right Arrow'},
+            {v:'ArrowUp',l:'Up'},{v:'ArrowDown',l:'Down'},{v:'ArrowLeft',l:'Left'},{v:'ArrowRight',l:'Right'},
             {v:'Enter',l:'Enter'},{v:'Escape',l:'Escape'},{v:'Space',l:'Space'},{v:'Tab',l:'Tab'},
             {v:'Shift',l:'Shift'},{v:'Ctrl',l:'Ctrl'},{v:'Alt',l:'Alt'},
             {v:'KeyW',l:'W'},{v:'KeyA',l:'A'},{v:'KeyS',l:'S'},{v:'KeyD',l:'D'},
             {v:'KeyQ',l:'Q'},{v:'KeyE',l:'E'},{v:'KeyR',l:'R'},{v:'KeyF',l:'F'},
             {v:'KeyZ',l:'Z'},{v:'KeyX',l:'X'},{v:'KeyC',l:'C'},{v:'KeyV',l:'V'},
-            {v:'Digit1',l:'1'},{v:'Digit2',l:'2'},{v:'Digit3',l:'3'},{v:'Digit4',l:'4'},{v:'Digit5',l:'5'},
-            {v:'MouseLeft',l:'Left Mouse Button'},{v:'MouseRight',l:'Right Mouse Button'},
+            {v:'Digit1',l:'1'},{v:'Digit2',l:'2'},{v:'Digit3',l:'3'},
+            {v:'MouseLeft',l:'Left Click'},{v:'MouseRight',l:'Right Click'},
         ];
+
+        var dragging = null;
+        var dragStart = {x:0, y:0};
+        var elemStart = {x:0, y:0};
+        var resizing = null;
+        var resizeStart = {w:0, h:0, x:0, y:0};
 
         function keySelects() {
             var opts = keyOptions.map(function(k){ return '<option value="'+k.v+'">'+k.l+'</option>'; }).join('');
-            var ids = ['btnKey','stickUp','stickDown','stickLeft','stickRight'];
-            for (var i=0; i<ids.length; i++) {
-                var el = document.getElementById(ids[i]);
-                if (el) el.innerHTML = opts;
-            }
+            ['btnKey','stickUp','stickDown','stickLeft','stickRight'].forEach(function(id){
+                var el = document.getElementById(id); if (el) el.innerHTML = opts;
+            });
         }
 
         function renderButtons() {
             var container = document.getElementById('gamepadContainer');
             container.innerHTML = '';
+            container.style.pointerEvents = editMode ? 'auto' : 'none';
             
-            for (var i=0; i<elements.length; i++) {
-                var el = elements[i];
+            elements.forEach(function(el){
                 var div = document.createElement('div');
-                div.className = 'gpad-btn';
+                div.className = 'gpad-btn' + (editMode ? ' edit-mode' : '');
                 div.id = 'gpad-' + el.id;
-                div.textContent = el.label || '';
+                div.textContent = el.label || (el.type==='stick'?'🕹':'');
                 div.style.borderColor = el.color;
                 div.style.backgroundColor = el.color + '33';
+                div.style.pointerEvents = 'auto';
                 
                 var vw = window.innerWidth / 100;
                 var vh = window.innerHeight / 100;
@@ -202,162 +232,216 @@
                 
                 if (el.type === 'stick') {
                     var inner = document.createElement('div');
-                    inner.style.cssText = 'width:40%;height:40%;border-radius:50%;background:rgba(99,102,241,0.7);position:absolute;';
+                    inner.style.cssText = 'width:40%;height:40%;border-radius:50%;background:rgba(99,102,241,0.7);position:absolute;pointer-events:none;';
                     div.appendChild(inner);
                 }
                 
-                div.addEventListener('touchstart', function(e){ e.preventDefault(); this.style.transform='scale(0.85)'; });
-                div.addEventListener('touchend', function(){ this.style.transform='scale(1)'; });
-                div.addEventListener('mousedown', function(e){ e.preventDefault(); this.style.transform='scale(0.85)'; });
-                div.addEventListener('mouseup', function(){ this.style.transform='scale(1)'; });
+                // Resize handle
+                var resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+                resizeHandle.title = 'Drag to resize';
+                div.appendChild(resizeHandle);
+                
+                // Delete handle (in edit mode)
+                var deleteHandle = document.createElement('div');
+                deleteHandle.className = 'delete-handle';
+                deleteHandle.textContent = '×';
+                deleteHandle.onclick = function(e){ e.stopPropagation(); deleteElementById(el.id); };
+                div.appendChild(deleteHandle);
+                
+                // Touch/Mouse events for drag
+                div.addEventListener('touchstart', function(e){ handleStart(e, el, div); }, {passive: false});
+                div.addEventListener('mousedown', function(e){ handleStart(e, el, div); });
+                
+                // Resize events
+                resizeHandle.addEventListener('touchstart', function(e){ startResize(e, el, div); e.stopPropagation(); }, {passive: false});
+                resizeHandle.addEventListener('mousedown', function(e){ startResize(e, el, div); e.stopPropagation(); });
                 
                 container.appendChild(div);
+            });
+        }
+
+        function handleStart(e, el, div) {
+            if (!editMode) return;
+            e.preventDefault();
+            
+            var cx = e.touches ? e.touches[0].clientX : e.clientX;
+            var cy = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            dragging = { el: el, div: div };
+            dragStart = { x: cx, y: cy };
+            elemStart = { x: el.x, y: el.y };
+        }
+
+        function startResize(e, el, div) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var cx = e.touches ? e.touches[0].clientX : e.clientX;
+            var cy = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            resizing = { el: el, div: div };
+            resizeStart = { w: el.w, h: el.h, x: cx, y: cy };
+        }
+
+        document.addEventListener('touchmove', function(e){
+            if (dragging) {
+                e.preventDefault();
+                var cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+                var vw = window.innerWidth / 100, vh = window.innerHeight / 100;
+                dragging.el.x = Math.round(elemStart.x + (cx - dragStart.x) / vw);
+                dragging.el.y = Math.round(elemStart.y + (cy - dragStart.y) / vh);
+                updateButtonPosition(dragging.div, dragging.el);
             }
+            if (resizing) {
+                e.preventDefault();
+                var cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+                var scale = Math.max(0.5, Math.min(3, 1 + (cx - resizeStart.x + cy - resizeStart.y) / 200));
+                resizing.el.w = Math.round(resizeStart.w * scale);
+                resizing.el.h = Math.round(resizeStart.h * scale);
+                resizing.el.w = Math.max(25, Math.min(250, resizing.el.w));
+                resizing.el.h = Math.max(25, Math.min(250, resizing.el.h));
+                updateButtonPosition(resizing.div, resizing.el);
+                resizing.div.style.fontSize = Math.round(Math.min(resizing.el.w, resizing.el.h) * 0.3) + 'px';
+            }
+        }, {passive: false});
+
+        document.addEventListener('mousemove', function(e){
+            if (dragging) {
+                var vw = window.innerWidth / 100, vh = window.innerHeight / 100;
+                dragging.el.x = Math.round(elemStart.x + (e.clientX - dragStart.x) / vw);
+                dragging.el.y = Math.round(elemStart.y + (e.clientY - dragStart.y) / vh);
+                updateButtonPosition(dragging.div, dragging.el);
+            }
+            if (resizing) {
+                var scale = Math.max(0.5, Math.min(3, 1 + (e.clientX - resizeStart.x + e.clientY - resizeStart.y) / 200));
+                resizing.el.w = Math.round(resizeStart.w * scale);
+                resizing.el.h = Math.round(resizeStart.h * scale);
+                resizing.el.w = Math.max(25, Math.min(250, resizing.el.w));
+                resizing.el.h = Math.max(25, Math.min(250, resizing.el.h));
+                updateButtonPosition(resizing.div, resizing.el);
+                resizing.div.style.fontSize = Math.round(Math.min(resizing.el.w, resizing.el.h) * 0.3) + 'px';
+            }
+        });
+
+        document.addEventListener('touchend', function(){ dragging = null; resizing = null; saveConfig(); });
+        document.addEventListener('mouseup', function(){ dragging = null; resizing = null; saveConfig(); });
+
+        function updateButtonPosition(div, el) {
+            var vw = window.innerWidth / 100, vh = window.innerHeight / 100;
+            div.style.left = Math.round(el.x * vw - el.w/2) + 'px';
+            div.style.top = Math.round(el.y * vh - el.h/2) + 'px';
+            div.style.width = el.w + 'px';
+            div.style.height = el.h + 'px';
+        }
+
+        function deleteElementById(id) {
+            elements = elements.filter(function(e){ return e.id !== id; });
+            if (selectedId === id) { selectedId = null; document.getElementById('editor').style.display = 'none'; }
+            renderButtons(); updateList(); saveConfig();
+            showToast('Element deleted');
+        }
+
+        function toggleEdit() {
+            editMode = !editMode;
+            var btn = document.getElementById('editBtn');
+            btn.classList.toggle('active', editMode);
+            btn.textContent = editMode ? '✅' : '✋';
+            renderButtons();
+            showToast(editMode ? 'Edit mode ON - Drag to move, drag corner to resize' : 'Edit mode OFF');
         }
 
         function updateList() {
             var sel = document.getElementById('elemSelect');
             var html = '<option value="">-- Choose element --</option>';
-            for (var i=0; i<elements.length; i++) {
-                var e = elements[i];
-                html += '<option value="' + e.id + '">' + (e.type==='stick'?'🕹 ':'🔘 ') + (e.label||e.id) + '</option>';
-            }
+            elements.forEach(function(e){
+                html += '<option value="'+e.id+'">'+(e.type==='stick'?'🕹 ':'🔘 ')+(e.label||e.id)+' ('+e.w+'px)</option>';
+            });
             sel.innerHTML = html;
         }
 
-        function openSettings() {
-            document.getElementById('settingsPanel').className = 'open';
-            updateList();
-            keySelects();
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsPanel').className = '';
-        }
-
+        function openSettings() { document.getElementById('settingsPanel').className = 'open'; updateList(); keySelects(); }
+        function closeSettings() { document.getElementById('settingsPanel').className = ''; }
         function selectElem() {
             var id = document.getElementById('elemSelect').value;
-            if (!id) {
-                document.getElementById('editor').style.display = 'none';
-                return;
-            }
+            if (!id) { document.getElementById('editor').style.display='none'; return; }
             selectedId = id;
-            document.getElementById('editor').style.display = 'block';
-            
-            var el = null;
-            for (var i=0; i<elements.length; i++) {
-                if (elements[i].id === id) { el = elements[i]; break; }
-            }
+            document.getElementById('editor').style.display='block';
+            var el = elements.find(function(e){ return e.id === id; });
             if (!el) return;
-            
             document.getElementById('elemType').value = el.type;
-            document.getElementById('elemLabel').value = el.label || '';
-            document.getElementById('elemColor').value = el.color || '#6366f1';
-            document.getElementById('elemSize').value = el.w || 55;
-            document.getElementById('sizeVal').textContent = el.w || 55;
-            
-            if (el.type === 'button') {
-                document.getElementById('btnKeys').style.display = 'block';
-                document.getElementById('stickKeys').style.display = 'none';
-                document.getElementById('btnKey').value = el.key || '';
+            document.getElementById('elemLabel').value = el.label||'';
+            document.getElementById('elemColor').value = el.color||'#6366f1';
+            document.getElementById('elemSize').value = el.w||55;
+            document.getElementById('sizeVal').textContent = el.w||55;
+            if (el.type==='button') {
+                document.getElementById('btnKeys').style.display='block';
+                document.getElementById('stickKeys').style.display='none';
+                document.getElementById('btnKey').value = el.key||'';
             } else {
-                document.getElementById('btnKeys').style.display = 'none';
-                document.getElementById('stickKeys').style.display = 'block';
+                document.getElementById('btnKeys').style.display='none';
+                document.getElementById('stickKeys').style.display='block';
                 if (el.keys) {
-                    document.getElementById('stickUp').value = el.keys.up || '';
-                    document.getElementById('stickDown').value = el.keys.down || '';
-                    document.getElementById('stickLeft').value = el.keys.left || '';
-                    document.getElementById('stickRight').value = el.keys.right || '';
+                    document.getElementById('stickUp').value = el.keys.up||'';
+                    document.getElementById('stickDown').value = el.keys.down||'';
+                    document.getElementById('stickLeft').value = el.keys.left||'';
+                    document.getElementById('stickRight').value = el.keys.right||'';
                 }
             }
         }
-
         function typeChange() {
             var t = document.getElementById('elemType').value;
-            document.getElementById('btnKeys').style.display = (t==='button') ? 'block' : 'none';
-            document.getElementById('stickKeys').style.display = (t==='stick') ? 'block' : 'none';
+            document.getElementById('btnKeys').style.display = t==='button'?'block':'none';
+            document.getElementById('stickKeys').style.display = t==='stick'?'block':'none';
         }
-
         function applyElem() {
             if (!selectedId) return;
-            var el = null;
-            for (var i=0; i<elements.length; i++) {
-                if (elements[i].id === selectedId) { el = elements[i]; break; }
-            }
+            var el = elements.find(function(e){ return e.id===selectedId; });
             if (!el) return;
-            
             el.type = document.getElementById('elemType').value;
             el.label = document.getElementById('elemLabel').value;
             el.color = document.getElementById('elemColor').value;
             el.w = parseInt(document.getElementById('elemSize').value);
             el.h = parseInt(document.getElementById('elemSize').value);
-            
-            if (el.type === 'button') {
-                el.key = document.getElementById('btnKey').value;
-            } else {
-                el.keys = {
-                    up: document.getElementById('stickUp').value,
-                    down: document.getElementById('stickDown').value,
-                    left: document.getElementById('stickLeft').value,
-                    right: document.getElementById('stickRight').value
-                };
-            }
-            
-            renderButtons();
-            updateList();
+            if (el.type==='button') { el.key = document.getElementById('btnKey').value; }
+            else { el.keys = { up: document.getElementById('stickUp').value, down: document.getElementById('stickDown').value, left: document.getElementById('stickLeft').value, right: document.getElementById('stickRight').value }; }
+            renderButtons(); updateList(); saveConfig();
         }
-
         function deleteElem() {
             if (!selectedId) return;
-            var newElements = [];
-            for (var i=0; i<elements.length; i++) {
-                if (elements[i].id !== selectedId) newElements.push(elements[i]);
-            }
-            elements = newElements;
-            selectedId = null;
-            document.getElementById('editor').style.display = 'none';
-            renderButtons();
-            updateList();
+            deleteElementById(selectedId);
+            document.getElementById('editor').style.display='none';
+            document.getElementById('elemSelect').value='';
         }
-
         function addBtn() {
-            var id = 'btn_' + Date.now();
-            elements.push({id:id, type:'button', x:50, y:50, w:55, h:55, key:'Enter', label:'New', color:'#6366f1'});
-            renderButtons();
-            updateList();
+            var id = 'btn_'+Date.now();
+            elements.push({id:id,type:'button',x:50,y:50,w:55,h:55,key:'Enter',label:'New',color:'#6366f1'});
+            renderButtons(); updateList(); saveConfig();
+            showToast('Button added! Drag to move, corner to resize');
         }
-
         function addStk() {
-            var id = 'stick_' + Date.now();
-            elements.push({id:id, type:'stick', x:30, y:55, w:90, h:90, keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'}, label:'', color:'#6366f1'});
-            renderButtons();
-            updateList();
+            var id = 'stick_'+Date.now();
+            elements.push({id:id,type:'stick',x:30,y:55,w:90,h:90,keys:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},label:'',color:'#6366f1'});
+            renderButtons(); updateList(); saveConfig();
+            showToast('Stick added! Drag to move, corner to resize');
         }
-
-        function toggleMouse() {
-            document.getElementById('mouseArea').style.display = document.getElementById('showMouse').checked ? 'block' : 'none';
-        }
-
-        function saveClose() {
-            localStorage.setItem('nexus_gamepad_v3', JSON.stringify(elements));
-            closeSettings();
+        function toggleMouse() { document.getElementById('mouseArea').style.display = document.getElementById('showMouse').checked?'block':'none'; }
+        function saveConfig() { localStorage.setItem('nexus_gamepad_v4', JSON.stringify(elements)); }
+        function saveClose() { saveConfig(); closeSettings(); showToast('Saved!'); }
+        function showToast(msg) {
+            var t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+            document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2000);
         }
 
         // Mouse area
         var ma = document.getElementById('mouseArea');
-        ma.style.left = '25%'; ma.style.top = '15%'; ma.style.width = '50%'; ma.style.height = '60%';
-        var maActive = false, maLast = {x:0,y:0};
+        ma.style.cssText = 'left:25%;top:15%;width:50%;height:60%;';
+        var maActive=false, maLast={x:0,y:0};
         ma.addEventListener('touchstart', function(e){ maActive=true; maLast={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
-        ma.addEventListener('touchmove', function(e){
-            if(!maActive) return; e.preventDefault();
-            var s = parseInt(document.getElementById('mouseSens').value||15)/10;
-            maLast={x:e.touches[0].clientX,y:e.touches[0].clientY};
-        });
+        ma.addEventListener('touchmove', function(e){ if(!maActive)return; e.preventDefault(); var s=parseInt(document.getElementById('mouseSens').value||15)/10; maLast={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
         ma.addEventListener('touchend', function(){ maActive=false; });
 
-        // Init
-        renderButtons();
-        keySelects();
+        renderButtons(); keySelects();
     </script>
 </body>
 </html>
