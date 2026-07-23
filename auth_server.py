@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # auth_server.py - Nexus Remote Full Auth Server
 from http.server import HTTPServer, BaseHTTPRequestHandler
