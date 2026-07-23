@@ -87,6 +87,7 @@ class AuthHandler(BaseHTTPRequestHandler):
             '/reset': '/app/webapp/reset.html',
             '/dashboard': '/app/webapp/dashboard.html',
             '/download': '/app/webapp/download.html',
+            '/download': '/app/webapp/download.html',
             '/viewer': '/app/webapp/viewer.html',
             '/speedtest': '/app/webapp/speedtest.html',
             '/status': '/app/webapp/status.html',
@@ -124,6 +125,7 @@ class AuthHandler(BaseHTTPRequestHandler):
             '/register': '/app/webapp/register.html',
             '/reset': '/app/webapp/reset.html',
             '/dashboard': '/app/webapp/dashboard.html',
+            '/download': '/app/webapp/download.html',
             '/download': '/app/webapp/download.html',
             '/viewer': '/app/webapp/viewer.html',
             '/speedtest': '/app/webapp/speedtest.html',
@@ -185,4 +187,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     print(f"Nexus Remote Auth Server on port {port}")
     HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
+
 

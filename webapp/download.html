@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download - Nexus Remote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
+        
+        nav {
+            background: #0d0d24; border-bottom: 1px solid #1a1a3e;
+            padding: 16px 0; position: sticky; top: 0; z-index: 100;
+        }
+        .nav-container {
+            max-width: 1200px; margin: 0 auto; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { color: #888; text-decoration: none; font-size: 14px; }
+        .nav-links a:hover { color: #fff; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+        
+        h1 { text-align: center; font-size: 48px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+        .subtitle { text-align: center; color: #888; font-size: 18px; margin-bottom: 60px; }
+        
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+        .download-card {
+            background: #151530; border: 1px solid #2a2a4a;
+            border-radius: 16px; padding: 30px; text-align: center;
+            transition: all 0.3s;
+        }
+        .download-card:hover { transform: translateY(-4px); border-color: #6366f1; }
+        .download-card .icon { font-size: 48px; margin-bottom: 16px; }
+        .download-card h3 { font-size: 20px; margin-bottom: 8px; }
+        .download-card p { color: #888; font-size: 13px; margin-bottom: 20px; min-height: 40px; }
+        .download-card .version { color: #666; font-size: 11px; margin-bottom: 16px; }
+        
+        .btn-download {
+            display: inline-block; padding: 12px 28px;
+            border-radius: 10px; font-size: 14px; font-weight: 600;
+            text-decoration: none; transition: all 0.3s;
+        }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover { background: #5558e6; }
+        .btn-secondary { background: transparent; border: 2px solid #6366f1; color: #6366f1; }
+        .btn-secondary:hover { background: #6366f1; color: #fff; }
+        .btn-coming { background: #333; color: #888; cursor: not-allowed; }
+        
+        .other-downloads {
+            margin-top: 60px;
+            text-align: center;
+        }
+        .other-downloads h2 { font-size: 28px; margin-bottom: 30px; }
+        .other-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .other-item {
+            background: #151530; border: 1px solid #2a2a4a;
+            border-radius: 12px; padding: 20px;
+            display: flex; align-items: center; gap: 12px;
+            transition: all 0.3s;
+        }
+        .other-item:hover { border-color: #6366f1; }
+        .other-item .icon { font-size: 28px; }
+        .other-item .info h4 { font-size: 14px; margin-bottom: 2px; }
+        .other-item .info span { color: #888; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo" style="text-decoration:none">⚡ Nexus Remote</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/download">Download</a>
+                <a href="/login">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Download Nexus Remote</h1>
+        <p class="subtitle">Available on all your devices. Free forever.</p>
+        
+        <div class="download-grid">
+            <!-- Windows -->
+            <div class="download-card">
+                <div class="icon">🖥</div>
+                <h3>Windows</h3>
+                <p>Windows 10/11 · 64-bit · DXGI capture · NVENC/AMF encoding</p>
+                <div class="version">v4.0.0 · 45 MB</div>
+                <a href="#" class="btn-download btn-primary">Download .exe</a>
+                <br><br>
+                <a href="#" class="btn-download btn-secondary" style="font-size:12px">MSI Installer</a>
+            </div>
+            
+            <!-- macOS -->
+            <div class="download-card">
+                <div class="icon">🍎</div>
+                <h3>macOS</h3>
+                <p>macOS 12+ · Apple Silicon & Intel · VideoToolbox encoding</p>
+                <div class="version">v4.0.0 · 38 MB</div>
+                <a href="#" class="btn-download btn-primary">Download .dmg</a>
+            </div>
+            
+            <!-- Linux -->
+            <div class="download-card">
+                <div class="icon">🐧</div>
+                <h3>Linux</h3>
+                <p>Ubuntu/Debian/Fedora/Arch · VAAPI encoding</p>
+                <div class="version">v4.0.0 · 32 MB</div>
+                <a href="#" class="btn-download btn-primary">Download .deb</a>
+                <br><br>
+                <a href="#" class="btn-download btn-secondary" style="font-size:12px">AppImage / .rpm</a>
+            </div>
+            
+            <!-- Android -->
+            <div class="download-card">
+                <div class="icon">📱</div>
+                <h3>Android</h3>
+                <p>Android 8+ · MediaCodec encoding · Termux support</p>
+                <div class="version">v4.0.0 · 18 MB</div>
+                <a href="#" class="btn-download btn-primary">Download .apk</a>
+                <br><br>
+                <a href="#" class="btn-download btn-secondary" style="font-size:12px">Google Play</a>
+            </div>
+            
+            <!-- iOS -->
+            <div class="download-card">
+                <div class="icon">📱</div>
+                <h3>iOS / iPadOS</h3>
+                <p>iOS 15+ · VideoToolbox · App Store</p>
+                <div class="version">v4.0.0 · 22 MB</div>
+                <a href="#" class="btn-download btn-coming">App Store (Soon)</a>
+            </div>
+        </div>
+        
+        <div class="other-downloads">
+            <h2>Other Platforms</h2>
+            <div class="other-grid">
+                <div class="other-item">
+                    <div class="icon">📺</div>
+                    <div class="info"><h4>Android TV</h4><span>Google Play</span></div>
+                </div>
+                <div class="other-item">
+                    <div class="icon">🎮</div>
+                    <div class="info"><h4>PS5 Remote Play</h4><span>via Chiaki</span></div>
+                </div>
+                <div class="other-item">
+                    <div class="icon">🎮</div>
+                    <div class="info"><h4>Xbox Remote Play</h4><span>via Greenlight</span></div>
+                </div>
+                <div class="other-item">
+                    <div class="icon">🚗</div>
+                    <div class="info"><h4>Android Auto</h4><span>Google Play</span></div>
+                </div>
+                <div class="other-item">
+                    <div class="icon">🌐</div>
+                    <div class="info"><h4>Web Client</h4><span>No install needed</span></div>
+                </div>
+                <div class="other-item">
+                    <div class="icon">💻</div>
+                    <div class="info"><h4>Source Code</h4><span>GitHub</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
