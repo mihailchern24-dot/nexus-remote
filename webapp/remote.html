@@ -1,0 +1,13 @@
+﻿<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Remote Support - Nexus</title>
+<style>body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.card{background:#151530;border-radius:20px;padding:40px;width:450px;text-align:center;border:1px solid #2a2a4a}
+h1{background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.btn{padding:14px 28px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin:8px;background:#6366f1;color:#fff}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px;margin:8px 0}
+.link{background:#0a0a1a;padding:16px;border-radius:10px;word-break:break-all;color:#6366f1;margin:16px 0;font-family:monospace}</style></head>
+<body><div class="card"><h1>Remote Support</h1><p style="color:#888">Generate a one-time link to share your screen</p>
+<input id="name" placeholder="Session name"><select id="expiry" style="width:100%;padding:12px;border-radius:10px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;margin:8px 0"><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 hour</option></select>
+<div class="link" id="linkBox" style="display:none"></div>
+<button class="btn" onclick="generate()">Generate Link</button>
+<p style="color:#888;font-size:12px;margin-top:16px">End-to-end encrypted | One-time use | Revocable</p></div>
+<script>function generate(){var n=document.getElementById('name').value||'Support';var e=document.getElementById('expiry').value;var id='nx-'+Math.random().toString(36).substr(2,8);var url='https://nexus-remote.onrender.com/support/'+id;document.getElementById('linkBox').style.display='block';document.getElementById('linkBox').textContent=url;fetch('/api/support/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,name:n,expiry:e})})}</script></body></html>

@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(NexusRemote VERSION 2.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -54,3 +54,7 @@ target_link_libraries(signaling_server PRIVATE nexus_core)
 
 add_executable(stun_client src/stun_client.cpp)
 target_link_libraries(stun_client PRIVATE nexus_core)
+
+# Nexus Remote Desktop UI
+add_executable(nexus_remote_ui WIN32 src/nexus_final_ui.cpp)
+target_link_libraries(nexus_remote_ui PRIVATE gdiplus)
