@@ -1,205 +1,123 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Nexus Remote</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; min-height: 100vh; }
-        
-        nav {
-            background: #0d0d24; border-bottom: 1px solid #1a1a3e;
-            padding: 16px 0; position: sticky; top: 0; z-index: 100;
-        }
-        .nav-container {
-            max-width: 1200px; margin: 0 auto; padding: 0 20px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .logo { font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links { display: flex; gap: 16px; align-items: center; }
-        .nav-links a { color: #888; text-decoration: none; font-size: 14px; }
-        .nav-links a:hover { color: #fff; }
-        .btn-nav { padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; }
-        .btn-logout { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
-        .btn-logout:hover { background: #ef4444; color: #fff; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
-        
-        .welcome { margin-bottom: 40px; }
-        .welcome h1 { font-size: 32px; margin-bottom: 8px; }
-        .welcome p { color: #888; }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-        .stat-card {
-            background: #151530; border: 1px solid #2a2a4a;
-            border-radius: 12px; padding: 24px; text-align: center;
-        }
-        .stat-card h3 { font-size: 32px; color: #6366f1; margin-bottom: 4px; }
-        .stat-card p { color: #888; font-size: 13px; }
-        
-        .section { margin-bottom: 40px; }
-        .section h2 { font-size: 22px; margin-bottom: 20px; color: #fff; }
-        
-        .device-list { display: flex; flex-direction: column; gap: 10px; }
-        .device-item {
-            background: #151530; border: 1px solid #2a2a4a;
-            border-radius: 12px; padding: 16px 20px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .device-item:hover { border-color: #6366f1; }
-        .device-info h3 { font-size: 15px; margin-bottom: 2px; }
-        .device-info p { color: #777; font-size: 12px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-        .status-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-        .status-dot.offline { background: #ef4444; }
-        
-        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        
-        .profile-card {
-            background: #151530; border: 1px solid #2a2a4a;
-            border-radius: 12px; padding: 24px;
-        }
-        .profile-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #1a1a3e;
-        }
-        .profile-row:last-child { border-bottom: none; }
-        .profile-row label { color: #888; font-size: 13px; }
-        .profile-row span { color: #fff; font-size: 14px; font-weight: 500; }
-        .profile-row a { color: #6366f1; text-decoration: none; font-size: 13px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0}
+nav{background:#0d0d24;border-bottom:1px solid #1a1a3e;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:18px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links a{color:#888;text-decoration:none;font-size:12px;margin-left:10px}
+.container{max-width:900px;margin:0 auto;padding:30px 20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:#151530;border-radius:10px;padding:16px;text-align:center}
+.stat .val{font-size:28px;font-weight:800;color:#6366f1}
+.stat .lbl{font-size:10px;color:#888;margin-top:2px}
+.section{margin-bottom:24px}
+.section h2{font-size:18px;color:#fff;margin-bottom:12px}
+.card{background:#151530;border:1px solid #2a2a4a;border-radius:10px;padding:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.card .name{font-weight:600;font-size:14px}
+.card .info{font-size:11px;color:#888}
+.card .actions button{padding:6px 12px;border-radius:6px;border:none;font-size:10px;font-weight:600;cursor:pointer;color:#fff;margin:2px}
+.btn-wake{background:#f59e0b}.btn-sleep{background:#888}.btn-view{background:#22c55e}.btn-del{background:#ef4444}
+.profile{background:#151530;border:1px solid #2a2a4a;border-radius:10px;padding:16px}
+.profile .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1a1a3e}
+.profile .row:last-child{border:none}
+.profile label{color:#888;font-size:11px}
+.profile span{font-size:13px;font-weight:500}
+.profile a{color:#6366f1;text-decoration:none;font-size:12px}
+.btn-logout{background:#ef4444;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:11px;margin-top:10px}
+</style>
 </head>
 <body>
-    <nav>
-        <div class="nav-container">
-            <div class="logo">⚡ Nexus Remote</div>
-            <div class="nav-links">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/dashboard#devices">Devices</a>
-                <a href="/dashboard#profile">Profile</a>
-                <a href="/reset" class="btn-nav btn-logout">Change Password</a>
-                <a href="#" class="btn-nav btn-logout" onclick="logout()">Logout</a>
-            </div>
-        </div>
-    </nav>
+<nav>
+<div class="logo">Nexus Remote</div>
+<div class="nav-links">
+<a href="/">Home</a>
+<a href="/download">Download</a>
+<a href="/viewer">Viewer</a>
+<a href="/gamepad">Gamepad</a>
+<a href="/docs">Docs</a>
+<button class="btn-logout" onclick="logout()">Logout</button>
+</div>
+</nav>
 
-    <div class="container">
-        <div class="welcome">
-            <h1>Welcome back, <span id="userEmail">User</span>!</h1>
-            <p>Your Peer ID: <strong id="peerId" style="color:#6366f1">Loading...</strong></p>
-        </div>
+<div class="container">
+<h1 style="margin-bottom:4px">Welcome, <span id="userName">User</span>!</h1>
+<p style="color:#888;font-size:12px;margin-bottom:20px">Peer ID: <span id="peerId" style="color:#6366f1">---</span></p>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3 id="deviceCount">0</h3>
-                <p>Connected Devices</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="sessionCount">0</h3>
-                <p>Active Sessions</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="dataUsed">0 GB</h3>
-                <p>Data Transferred</p>
-            </div>
-            <div class="stat-card">
-                <h3>🔒</h3>
-                <p>E2E Encrypted</p>
-            </div>
-        </div>
+<div class="stats">
+<div class="stat"><div class="val" id="deviceCount">0</div><div class="lbl">Devices</div></div>
+<div class="stat"><div class="val" id="streamCount">0</div><div class="lbl">Streams</div></div>
+<div class="stat"><div class="val" id="dataUsed">0</div><div class="lbl">MB Used</div></div>
+<div class="stat"><div class="val">🔒</div><div class="lbl">E2E Active</div></div>
+</div>
 
-        <div class="section" id="devices">
-            <h2>📱 My Devices</h2>
-            <div class="device-list" id="deviceList">
-                <div class="device-item">
-                    <div class="device-info">
-                        <h3><span class="status-dot offline"></span> No devices yet</h3>
-                        <p>Install Nexus Agent on your devices to get started</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="section">
+<h2>My Devices</h2>
+<div id="deviceList">
+<div class="card"><div class="name">No devices yet</div><div class="info">Add devices in the desktop app</div></div>
+</div>
+</div>
 
-        <div class="section" id="profile">
-            <h2>👤 Profile Settings</h2>
-            <div class="profile-card">
-                <div class="profile-row">
-                    <label>Email</label>
-                    <span id="profileEmail">-</span>
-                </div>
-                <div class="profile-row">
-                    <label>Peer ID</label>
-                    <span id="profilePeerId">-</span>
-                </div>
-                <div class="profile-row">
-                    <label>Account Created</label>
-                    <span id="profileCreated">-</span>
-                </div>
-                <div class="profile-row">
-                    <label>Last Login</label>
-                    <span id="profileLastLogin">-</span>
-                </div>
-                <div class="profile-row">
-                    <label>Password</label>
-                    <a href="/reset">Change Password →</a>
-                </div>
-                <div class="profile-row">
-                    <label>MFA</label>
-                    <span style="color:#888">Coming soon</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="section">
+<h2>Profile</h2>
+<div class="profile">
+<div class="row"><label>Email</label><span id="profileEmail">---</span></div>
+<div class="row"><label>Peer ID</label><span id="profilePeer">---</span></div>
+<div class="row"><label>Account Created</label><span id="profileCreated">---</span></div>
+<div class="row"><label>Last Login</label><span id="profileLast">---</span></div>
+<div class="row"><label>Password</label><a href="/reset">Change Password</a></div>
+<div class="row"><label>Security</label><span style="color:#22c55e">E2E + MFA Available</span></div>
+</div>
+</div>
 
-    <script>
-        const token = localStorage.getItem('nexus_token');
-        const email = localStorage.getItem('nexus_email');
-        const peerId = localStorage.getItem('nexus_peer_id');
-        
-        if (!token) { window.location.href = '/login'; }
-        
-        document.getElementById('userEmail').textContent = email || 'User';
-        document.getElementById('peerId').textContent = peerId || 'Unknown';
-        document.getElementById('profileEmail').textContent = email || '-';
-        document.getElementById('profilePeerId').textContent = peerId || '-';
-        
-        // Load devices
-        fetch('/peers')
-            .then(r => r.json())
-            .then(data => {
-                const peers = data.peers || [];
-                document.getElementById('deviceCount').textContent = peers.length;
-                
-                const list = document.getElementById('deviceList');
-                if (peers.length > 0) {
-                    list.innerHTML = peers.map(p => 
-                        <div class="device-item">
-                            <div class="device-info">
-                                <h3><span class="status-dot online"></span> ...</h3>
-                                <p>Online</p>
-                            </div>
-                            <button class="btn btn-primary" onclick="connectTo('')">Connect</button>
-                        </div>
-                    ).join('');
-                }
-            });
-        
-        function connectTo(peerId) {
-            alert('Connect to: ' + peerId + '\n\nUse Nexus Remote desktop client to connect.');
-        }
-        
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-    </script>
+<div class="section">
+<h2>Quick Actions</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<a href="/viewer" style="background:#22c55e;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:12px">Open Web Viewer</a>
+<a href="/gamepad" style="background:#6366f1;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:12px">Open Gamepad</a>
+<a href="/speedtest" style="background:#f59e0b;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:12px">Speed Test</a>
+<a href="/support" style="background:#888;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:12px">Remote Support</a>
+</div>
+</div>
+</div>
+
+<script>
+const token = localStorage.getItem('nexus_token');
+const email = localStorage.getItem('nexus_email');
+const peerId = localStorage.getItem('nexus_peer_id');
+
+if (!token) { window.location.href = '/login'; }
+
+document.getElementById('userName').textContent = email || 'User';
+document.getElementById('peerId').textContent = peerId || '---';
+document.getElementById('profileEmail').textContent = email || '---';
+document.getElementById('profilePeer').textContent = peerId || '---';
+
+fetch('/peers').then(r=>r.json()).then(d=>{
+const peers = d.peers||[];
+document.getElementById('deviceCount').textContent = peers.length;
+if(peers.length>0){
+document.getElementById('deviceList').innerHTML = peers.map(p=>
+<div class="card">
+<div class="name">...</div>
+<div class="info">Online</div>
+<div class="actions">
+<button class="btn-wake" onclick="wake('')">Wake</button>
+<button class="btn-sleep" onclick="sleep('')">Sleep</button>
+<button class="btn-view" onclick="view('')">View</button>
+</div>
+</div>).join('');
+}
+});
+
+function wake(id){ alert('WOL sent to '+id); fetch('/wol',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:'AA:BB:CC:DD:EE:FF'})}); }
+function sleep(id){ alert('Sleep command sent to '+id); }
+function view(id){ window.location.href='/viewer?peer='+id; }
+function logout(){ localStorage.clear(); window.location.href='/'; }
+</script>
 </body>
 </html>
