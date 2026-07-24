@@ -1,249 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Nexus Gamepad</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:rgba(0,0,0,0.2);overflow:hidden;touch-action:manipulation;position:fixed;top:0;left:0;right:0;bottom:0}
-#bar{position:fixed;top:10px;right:10px;z-index:99999;display:flex;gap:8px}
-.tbtn{width:45px;height:45px;border-radius:50%;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff}
-.tbtn.settings{background:#6366f1}
-.tbtn.edit{background:#f59e0b}
-.tbtn.edit.active{background:#22c55e}
-#panel{position:fixed;top:5%;left:5%;right:5%;bottom:5%;background:#0a0a1a;color:#fff;z-index:99998;display:none;overflow-y:auto;padding:20px;border-radius:16px;border:2px solid #6366f1}
-#panel.show{display:block!important}
-h2{color:#6366f1;text-align:center;font-size:18px;margin-bottom:15px}
-h3{color:#888;font-size:12px;margin:12px 0 6px;border-bottom:1px solid #1a1a3e;padding-bottom:4px}
-select,input[type=text],input[type=range]{width:100%;padding:8px;border-radius:6px;background:#151530;color:#fff;border:1px solid #2a2a4a;font-size:12px;margin-bottom:6px}
-input[type=color]{width:40px;height:35px;padding:2px}
-.btn{padding:10px 16px;border-radius:6px;border:none;font-size:12px;font-weight:bold;cursor:pointer;margin:2px;color:#fff}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#toolbar{position:fixed;top:10px;right:10px;z-index:99999;display:flex;gap:6px}
+#toolbar button{width:44px;height:44px;border-radius:50%;border:2px solid #fff;font-size:18px;cursor:pointer;color:#fff}
+#btnEdit{background:#f59e0b}#btnEdit.active{background:#22c55e;border-color:#22c55e}
+#btnSettings{background:#6366f1}
+
+.game-btn{position:fixed;border-radius:50%;background:rgba(30,30,60,0.85);border:3px solid rgba(99,102,241,0.8);color:#fff;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;font-size:16px;min-width:44px;min-height:44px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:transform 0.05s}
+.game-btn:active{transform:scale(0.85)!important}
+.game-btn.edit-mode{border-color:#f59e0b!important;border-style:dashed!important;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{border-color:#f59e0b}50%{border-color:#fff}}
+.game-btn .resizer{position:absolute;bottom:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#f59e0b;border:3px solid #fff;display:none;cursor:nwse-resize;z-index:10}
+.game-btn .deleter{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:3px solid #fff;display:none;cursor:pointer;z-index:10;font-size:12px;line-height:16px;text-align:center}
+.game-btn.edit-mode .resizer,.game-btn.edit-mode .deleter{display:block!important}
+
+.stick-inner{width:45%;height:45%;border-radius:50%;background:rgba(99,102,241,0.8);position:absolute;pointer-events:none;border:2px solid #fff}
+
+#settings{position:fixed;top:5%;left:5%;right:5%;bottom:5%;background:#0a0a1a;color:#fff;z-index:100000;display:none;overflow-y:auto;padding:15px;border-radius:16px;border:2px solid #6366f1}
+#settings.show{display:block!important}
+#settings h2{color:#6366f1;text-align:center;margin-bottom:12px;font-size:16px}
+#settings select,#settings input{width:100%;padding:8px;margin:4px 0;border-radius:6px;background:#151530;color:#fff;border:1px solid #2a2a4a;font-size:12px}
+#settings .btn{padding:10px;border-radius:6px;border:none;font-size:12px;font-weight:bold;cursor:pointer;margin:3px;color:#fff;width:100%}
 .btn-blue{background:#6366f1}.btn-green{background:#22c55e}.btn-red{background:#ef4444}
-.gpad{position:absolute;border-radius:50%;border:2px solid rgba(99,102,241,0.6);background:rgba(21,21,48,0.85);color:#fff;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;font-size:14px;pointer-events:auto;touch-action:none;user-select:none}
-.gpad .rh{position:absolute;bottom:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#f59e0b;border:2px solid #fff;cursor:nwse-resize;display:none;z-index:10}
-.gpad .dh{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#ef4444;border:2px solid #fff;cursor:pointer;display:none;z-index:10;font-size:10px;color:#fff;text-align:center;line-height:14px}
-.gpad.edit{border-style:dashed!important;border-color:#f59e0b!important}
-.gpad.edit .rh{display:block!important}
-.gpad.edit .dh{display:block!important}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;z-index:100000;pointer-events:none;animation:fade 2s forwards}
-@keyframes fade{0%,70%{opacity:1}100%{opacity:0}}
-.ma{position:absolute;border:1px dashed rgba(255,255,255,0.1);border-radius:10px;z-index:9998}
-label{color:#ccc;font-size:10px;display:block;margin:4px 0 2px}
+
+.toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;z-index:100001;pointer-events:none;opacity:0;transition:opacity 0.3s}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
 
-<div id="bar">
-<button class="tbtn edit" id="editBtn" onclick="toggleEdit()" title="Edit Mode">Edit</button>
-<button class="tbtn settings" onclick="togglePanel()" title="Settings">Set</button>
+<div id="toolbar">
+<button id="btnEdit" onclick="toggleEdit()">E</button>
+<button id="btnSettings" onclick="toggleSettings()">S</button>
 </div>
 
-<div id="panel">
-<button style="position:absolute;top:10px;right:10px;width:35px;height:35px;border-radius:50%;background:#ef4444;color:#fff;font-size:16px;border:none;cursor:pointer" onclick="togglePanel()">X</button>
-<h2>Gamepad Settings</h2>
-
-<select id="elemSelect" onchange="selectElem()" style="width:100%;padding:8px;border-radius:6px;background:#151530;color:#fff;border:1px solid #2a2a4a;font-size:12px;margin-bottom:10px">
-<option value="">-- Choose element --</option>
-</select>
-
+<div id="settings">
+<button style="position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:14px;cursor:pointer" onclick="toggleSettings()">X</button>
+<h2>Settings</h2>
+<select id="selElem" onchange="selectElem()"><option>-- Select --</option></select>
 <div id="editor" style="display:none">
-<h3>Mapping</h3>
-<label>Type</label>
-<select id="elemType" onchange="typeChange()"><option value="button">Button</option><option value="stick">Joystick</option></select>
-
-<div id="btnKeys"><label>Key</label><select id="btnKey"></select></div>
-<div id="stickKeys" style="display:none">
-<label>Up</label><select id="stickUp"></select>
-<label>Down</label><select id="stickDown"></select>
-<label>Left</label><select id="stickLeft"></select>
-<label>Right</label><select id="stickRight"></select>
-</div>
-
-<h3>Appearance</h3>
-<label>Text</label><input type="text" id="elemLabel" maxlength="4">
-<label>Color</label><input type="color" id="elemColor" value="#6366f1">
-<label>Size: <b id="sizeVal">55</b>px</label>
+<select id="elemType" onchange="typeChange()"><option value="button">Button</option><option value="stick">Stick</option></select>
+<div id="btnKeys"><select id="btnKey"></select></div>
+<div id="stickKeys" style="display:none"><select id="skUp"></select><select id="skDown"></select><select id="skLeft"></select><select id="skRight"></select></div>
+<input type="text" id="elemLabel" placeholder="Label" maxlength="4">
+<input type="color" id="elemColor" value="#6366f1">
 <input type="range" id="elemSize" min="30" max="200" value="55" oninput="document.getElementById('sizeVal').textContent=this.value">
-
-<button class="btn btn-blue" onclick="applyElem()" style="width:100%;margin-top:8px">Apply</button>
-<button class="btn btn-red" onclick="deleteElem()" style="width:100%;margin-top:4px">Delete</button>
+<small>Size: <b id="sizeVal">55</b>px</small>
+<button class="btn btn-blue" onclick="applyElem()">Apply</button>
+<button class="btn btn-red" onclick="deleteElem()">Delete</button>
+</div>
+<button class="btn btn-green" onclick="addBtn()">+ Button</button>
+<button class="btn btn-blue" onclick="addStick()">+ Stick</button>
+<button class="btn btn-blue" onclick="save();toggleSettings()">Save and Close</button>
 </div>
 
-<h3>Add Elements</h3>
-<button class="btn btn-green" onclick="addBtn()">+ Add Button</button>
-<button class="btn btn-blue" onclick="addStick()">+ Add Stick</button>
-
-<h3>Mouse Area</h3>
-<label><input type="checkbox" id="showMouse" checked onchange="document.getElementById('mouseArea').style.display=this.checked?'block':'none'"> Show</label>
-<label>Sensitivity</label>
-<input type="range" id="mouseSens" min="5" max="50" value="15">
-
-<button class="btn btn-blue" style="width:100%;margin-top:12px;padding:12px" onclick="save();togglePanel()">Save and Close</button>
-</div>
-
-<div class="ma" id="mouseArea"></div>
-<div id="container" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9997;"></div>
+<div id="toast" class="toast"></div>
+<div id="gamepad"></div>
 
 <script>
-var els=[];
-var edit=false;
-var sel=null;
+// DATA
+var E = [];
+var editMode = false;
+var selectedId = null;
+var activeDrag = null;
+var activeResize = null;
 
-try{var s=localStorage.getItem('nexus_gpad_v8');if(s)els=JSON.parse(s)}catch(e){}
-
-if(!els.length){
-els=[
-{id:'a',t:'button',x:80,y:58,w:55,h:55,k:'Enter',l:'A',c:'#22c55e'},
-{id:'b',t:'button',x:88,y:46,w:55,h:55,k:'Escape',l:'B',c:'#ef4444'},
-{id:'x',t:'button',x:64,y:46,w:55,h:55,k:'Space',l:'X',c:'#3b82f6'},
-{id:'y',t:'button',x:78,y:34,w:55,h:55,k:'Tab',l:'Y',c:'#f59e0b'},
-{id:'du',t:'button',x:18,y:38,w:40,h:40,k:'ArrowUp',l:'^',c:'#6366f1'},
-{id:'dd',t:'button',x:18,y:68,w:40,h:40,k:'ArrowDown',l:'v',c:'#6366f1'},
-{id:'dl',t:'button',x:6,y:53,w:40,h:40,k:'ArrowLeft',l:'<',c:'#6366f1'},
-{id:'dr',t:'button',x:32,y:53,w:40,h:40,k:'ArrowRight',l:'>',c:'#6366f1'},
-{id:'lb',t:'button',x:8,y:16,w:65,h:28,k:'Shift',l:'LB',c:'#6366f1'},
-{id:'rb',t:'button',x:68,y:16,w:65,h:28,k:'Ctrl',l:'RB',c:'#6366f1'},
+try{var s=localStorage.getItem('ng_v9');if(s)E=JSON.parse(s)}catch(e){}
+if(!E.length)E=[
+{i:'a',t:'button',x:78,y:56,w:55,h:55,k:'Enter',l:'A',c:'#22c55e'},
+{i:'b',t:'button',x:88,y:44,w:55,h:55,k:'Escape',l:'B',c:'#ef4444'},
+{i:'x',t:'button',x:64,y:44,w:55,h:55,k:'Space',l:'X',c:'#3b82f6'},
+{i:'y',t:'button',x:78,y:32,w:55,h:55,k:'Tab',l:'Y',c:'#f59e0b'},
+{i:'du',t:'button',x:18,y:36,w:40,h:40,k:'ArrowUp',l:'^',c:'#6366f1'},
+{i:'dd',t:'button',x:18,y:66,w:40,h:40,k:'ArrowDown',l:'v',c:'#6366f1'},
+{i:'dl',t:'button',x:6,y:51,w:40,h:40,k:'ArrowLeft',l:'<',c:'#6366f1'},
+{i:'dr',t:'button',x:32,y:51,w:40,h:40,k:'ArrowRight',l:'>',c:'#6366f1'},
+{i:'lb',t:'button',x:8,y:14,w:65,h:28,k:'Shift',l:'LB',c:'#6366f1'},
+{i:'rb',t:'button',x:68,y:14,w:65,h:28,k:'Ctrl',l:'RB',c:'#6366f1'}
 ];
-}
 
-var keys=[
-{v:'',l:'-- None --'},{v:'ArrowUp',l:'Up'},{v:'ArrowDown',l:'Down'},{v:'ArrowLeft',l:'Left'},{v:'ArrowRight',l:'Right'},
+var KEYS=[
+{v:'ArrowUp',l:'Up'},{v:'ArrowDown',l:'Down'},{v:'ArrowLeft',l:'Left'},{v:'ArrowRight',l:'Right'},
 {v:'Enter',l:'Enter'},{v:'Escape',l:'Escape'},{v:'Space',l:'Space'},{v:'Tab',l:'Tab'},
 {v:'Shift',l:'Shift'},{v:'Ctrl',l:'Ctrl'},{v:'Alt',l:'Alt'},
 {v:'KeyW',l:'W'},{v:'KeyA',l:'A'},{v:'KeyS',l:'S'},{v:'KeyD',l:'D'},
 {v:'KeyQ',l:'Q'},{v:'KeyE',l:'E'},{v:'KeyR',l:'R'},{v:'KeyF',l:'F'},
 {v:'Digit1',l:'1'},{v:'Digit2',l:'2'},{v:'Digit3',l:'3'},{v:'Digit4',l:'4'},
-{v:'MouseLeft',l:'Left Click'},{v:'MouseRight',l:'Right Click'},
+{v:'MouseLeft',l:'L.Click'},{v:'MouseRight',l:'R.Click'}
 ];
 
+// RENDER ALL BUTTONS
 function render(){
-var c=document.getElementById('container');
-c.innerHTML='';
-var vw=window.innerWidth/100,vh=window.innerHeight/100;
+var c=document.getElementById('gamepad');c.innerHTML='';
+var W=window.innerWidth,H=window.innerHeight;
 
-for(var i=0;i<els.length;i++){
-(function(){
-var el=els[i];
+for(var i=0;i<E.length;i++){
+var el=E[i];
 var d=document.createElement('div');
-d.className='gpad'+(edit?' edit':'');
+d.className='game-btn'+(editMode?' edit-mode':'');
+d.setAttribute('data-id',el.i);
 d.textContent=el.l||(el.t=='stick'?'O':'');
 d.style.borderColor=el.c;
-d.style.backgroundColor=el.c+'33';
-d.style.left=Math.round(el.x*vw-el.w/2)+'px';
-d.style.top=Math.round(el.y*vh-el.h/2)+'px';
+d.style.backgroundColor=el.c+'30';
+d.style.left=Math.round(el.x/100*W-el.w/2)+'px';
+d.style.top=Math.round(el.y/100*H-el.h/2)+'px';
 d.style.width=el.w+'px';
 d.style.height=el.h+'px';
 d.style.fontSize=Math.round(Math.min(el.w,el.h)*0.3)+'px';
-d.style.zIndex=9999+i;
+d.style.zIndex=9990+i;
 
 if(el.t=='stick'){
-var si=document.createElement('div');
-si.style.cssText='width:40%;height:40%;border-radius:50%;background:rgba(99,102,241,0.7);position:absolute;pointer-events:none;';
-d.appendChild(si);
+var si=document.createElement('div');si.className='stick-inner';d.appendChild(si);
 }
 
-var rh=document.createElement('div');rh.className='rh';
-var dh=document.createElement('div');dh.className='dh';dh.textContent='x';
-d.appendChild(rh);d.appendChild(dh);
+var rz=document.createElement('div');rz.className='resizer';
+var dl=document.createElement('div');dl.className='deleter';dl.textContent='x';
+d.appendChild(rz);d.appendChild(dl);
 
-d.addEventListener('pointerdown',function(e){
-if(!edit)return;
-e.preventDefault();d.setPointerCapture(e.pointerId);
-var ex=el.x,ey=el.y,sx=e.clientX,sy=e.clientY;
-function mv(ev){el.x=Math.round(ex+(ev.clientX-sx)/vw);el.y=Math.round(ey+(ev.clientY-sy)/vh);d.style.left=Math.round(el.x*vw-el.w/2)+'px';d.style.top=Math.round(el.y*vh-el.h/2)+'px';}
-function up(){d.releasePointerCapture(e.pointerId);d.removeEventListener('pointermove',mv);d.removeEventListener('pointerup',up);save();}
-d.addEventListener('pointermove',mv);d.addEventListener('pointerup',up);
-});
+// POINTER EVENTS - DIRECTLY ON ELEMENT
+d.onpointerdown=function(e){
+if(!editMode)return;
+e.preventDefault();e.stopPropagation();
+d.setPointerCapture(e.pointerId);
+var sx=e.clientX,sy=e.clientY,ex=el.x,ey=el.y;
+d.onpointermove=function(ev){
+el.x=Math.round(ex+(ev.clientX-sx)/(W/100));
+el.y=Math.round(ey+(ev.clientY-sy)/(H/100));
+d.style.left=Math.round(el.x/100*W-el.w/2)+'px';
+d.style.top=Math.round(el.y/100*H-el.h/2)+'px';
+};
+d.onpointerup=function(){d.onpointermove=null;d.onpointerup=null;d.releasePointerCapture(e.pointerId);save();};
+};
 
-rh.addEventListener('pointerdown',function(e){
-e.stopPropagation();e.preventDefault();rh.setPointerCapture(e.pointerId);
-var ew=el.w,eh=el.h,sx=e.clientX,sy=e.clientY;
-function mv(ev){var sc=1+(ev.clientX-sx+ev.clientY-sy)/200;sc=Math.max(0.5,Math.min(3,sc));el.w=Math.max(25,Math.min(250,Math.round(ew*sc)));el.h=Math.max(25,Math.min(250,Math.round(eh*sc)));d.style.width=el.w+'px';d.style.height=el.h+'px';d.style.left=Math.round(el.x*vw-el.w/2)+'px';d.style.top=Math.round(el.y*vh-el.h/2)+'px';d.style.fontSize=Math.round(Math.min(el.w,el.h)*0.3)+'px';}
-function up(){rh.releasePointerCapture(e.pointerId);rh.removeEventListener('pointermove',mv);rh.removeEventListener('pointerup',up);save();}
-rh.addEventListener('pointermove',mv);rh.addEventListener('pointerup',up);
-});
+rz.onpointerdown=function(e){
+e.preventDefault();e.stopPropagation();
+rz.setPointerCapture(e.pointerId);
+var sx=e.clientX,sy=e.clientY,ew=el.w,eh=el.h;
+rz.onpointermove=function(ev){
+var sc=1+(ev.clientX-sx+ev.clientY-sy)/150;
+sc=Math.max(0.5,Math.min(3,sc));
+el.w=Math.max(30,Math.min(250,Math.round(ew*sc)));
+el.h=Math.max(30,Math.min(250,Math.round(eh*sc)));
+d.style.width=el.w+'px';d.style.height=el.h+'px';
+d.style.left=Math.round(el.x/100*W-el.w/2)+'px';
+d.style.top=Math.round(el.y/100*H-el.h/2)+'px';
+d.style.fontSize=Math.round(Math.min(el.w,el.h)*0.3)+'px';
+};
+rz.onpointerup=function(){rz.onpointermove=null;rz.onpointerup=null;rz.releasePointerCapture(e.pointerId);save();};
+};
 
-dh.addEventListener('pointerdown',function(e){
-e.stopPropagation();e.preventDefault();
-els.splice(i,1);
-if(sel===el.id){sel=null;document.getElementById('editor').style.display='none';}
-render();updateList();save();
-});
+dl.onpointerdown=function(e){
+e.preventDefault();e.stopPropagation();
+E.splice(i,1);render();updateList();save();toast('Deleted');
+};
 
 c.appendChild(d);
-})();
 }
 }
 
+// TOGGLE EDIT
 function toggleEdit(){
-edit=!edit;
-var b=document.getElementById('editBtn');
-b.classList.toggle('active',edit);
-b.textContent=edit?'ON':'Edit';
+editMode=!editMode;
+var b=document.getElementById('btnEdit');
+b.classList.toggle('active',editMode);
+b.textContent=editMode?'ON':'E';
 render();
-toast(edit?'Edit Mode: Drag=move, Corner=resize, x=delete':'Game Mode');
+toast(editMode?'EDIT: Drag button, drag corner=resize, x=delete':'GAME MODE');
 }
 
-function togglePanel(){document.getElementById('panel').classList.toggle('show');if(document.getElementById('panel').classList.contains('show')){updateList();fillKeys();}}
-
-function updateList(){
-var s=document.getElementById('elemSelect');
-s.innerHTML='<option value="">-- '+els.length+' elements --</option>';
-for(var i=0;i<els.length;i++){s.innerHTML+='<option value="'+els[i].id+'">'+(els[i].t=='stick'?'[Stick] ':'[Btn] ')+(els[i].l||els[i].id)+' ('+els[i].w+'px)</option>';}
-}
-
-function fillKeys(){
-var o='';for(var i=0;i<keys.length;i++)o+='<option value="'+keys[i].v+'">'+keys[i].l+'</option>';
-['btnKey','stickUp','stickDown','stickLeft','stickRight'].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML=o;});
-}
-
-function getEl(id){for(var i=0;i<els.length;i++)if(els[i].id===id)return els[i];return null;}
-
+// SETTINGS
+function toggleSettings(){document.getElementById('settings').classList.toggle('show');updateList();fillKeys();}
+function updateList(){var s=document.getElementById('selElem');s.innerHTML='<option>-- Select ('+E.length+') --</option>';for(var i=0;i<E.length;i++)s.innerHTML+='<option value="'+E[i].i+'">'+(E[i].t=='stick'?'[S]':'[B]')+' '+(E[i].l||E[i].i)+'</option>';}
+function fillKeys(){var o='';for(var i=0;i<KEYS.length;i++)o+='<option value="'+KEYS[i].v+'">'+KEYS[i].l+'</option>';var ids=['btnKey','skUp','skDown','skLeft','skRight'];for(var j=0;j<ids.length;j++){var e=document.getElementById(ids[j]);if(e)e.innerHTML=o;}}
+function getEl(id){for(var i=0;i<E.length;i++)if(E[i].i===id)return E[i];return null;}
 function selectElem(){
-var id=document.getElementById('elemSelect').value;
-if(!id){document.getElementById('editor').style.display='none';return;}
-sel=id;var el=getEl(id);if(!el)return;
+var id=document.getElementById('selElem').value;
+if(id=='-- Select ('+E.length+') --'){document.getElementById('editor').style.display='none';return;}
+selectedId=id;var el=getEl(id);if(!el)return;
 document.getElementById('editor').style.display='block';
 document.getElementById('elemType').value=el.t;
 document.getElementById('elemLabel').value=el.l||'';
 document.getElementById('elemColor').value=el.c||'#6366f1';
-document.getElementById('elemSize').value=el.w;
-document.getElementById('sizeVal').textContent=el.w;
+document.getElementById('elemSize').value=el.w;document.getElementById('sizeVal').textContent=el.w;
 if(el.t=='button'){document.getElementById('btnKeys').style.display='block';document.getElementById('stickKeys').style.display='none';document.getElementById('btnKey').value=el.k||'';}
-else{document.getElementById('btnKeys').style.display='none';document.getElementById('stickKeys').style.display='block';if(el.ks){document.getElementById('stickUp').value=el.ks.up||'';document.getElementById('stickDown').value=el.ks.down||'';document.getElementById('stickLeft').value=el.ks.left||'';document.getElementById('stickRight').value=el.ks.right||'';}}
+else{document.getElementById('btnKeys').style.display='none';document.getElementById('stickKeys').style.display='block';if(el.ks){document.getElementById('skUp').value=el.ks.up||'';document.getElementById('skDown').value=el.ks.down||'';document.getElementById('skLeft').value=el.ks.left||'';document.getElementById('skRight').value=el.ks.right||'';}}
 }
-
 function typeChange(){var t=document.getElementById('elemType').value;document.getElementById('btnKeys').style.display=t=='button'?'block':'none';document.getElementById('stickKeys').style.display=t=='stick'?'block':'none';}
-
 function applyElem(){
-if(!sel)return;var el=getEl(sel);if(!el)return;
+if(!selectedId)return;var el=getEl(selectedId);if(!el)return;
 el.t=document.getElementById('elemType').value;
 el.l=document.getElementById('elemLabel').value;
 el.c=document.getElementById('elemColor').value;
 el.w=parseInt(document.getElementById('elemSize').value);
 el.h=parseInt(document.getElementById('elemSize').value);
 if(el.t=='button')el.k=document.getElementById('btnKey').value;
-else el.ks={up:document.getElementById('stickUp').value,down:document.getElementById('stickDown').value,left:document.getElementById('stickLeft').value,right:document.getElementById('stickRight').value};
+else el.ks={up:document.getElementById('skUp').value,down:document.getElementById('skDown').value,left:document.getElementById('skLeft').value,right:document.getElementById('skRight').value};
 render();updateList();save();
 }
+function deleteElem(){if(!selectedId)return;E=E.filter(function(e){return e.i!==selectedId;});selectedId=null;document.getElementById('editor').style.display='none';render();updateList();save();}
+function addBtn(){var id='b'+Date.now();E.push({i:id,t:'button',x:25+Math.random()*50,y:25+Math.random()*50,w:55,h:55,k:'Enter',l:'New',c:'#6366f1'});render();updateList();save();toast('Button added');}
+function addStick(){var id='s'+Date.now();E.push({i:id,t:'stick',x:20+Math.random()*40,y:30+Math.random()*40,w:90,h:90,ks:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},l:'O',c:'#6366f1'});render();updateList();save();toast('Stick added');}
 
-function deleteElem(){if(!sel)return;els=els.filter(function(e){return e.id!==sel;});sel=null;document.getElementById('editor').style.display='none';render();updateList();save();}
+function save(){localStorage.setItem('ng_v9',JSON.stringify(E));}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1500);}
 
-function addBtn(){var id='b_'+Date.now();var x=20+Math.random()*55;var y=20+Math.random()*55;els.push({id:id,t:'button',x:x,y:y,w:55,h:55,k:'Enter',l:'New',c:'#6366f1'});render();updateList();save();toast('Button added');}
-
-function addStick(){var id='s_'+Date.now();var x=15+Math.random()*50;var y=25+Math.random()*45;els.push({id:id,t:'stick',x:x,y:y,w:90,h:90,ks:{up:'KeyW',down:'KeyS',left:'KeyA',right:'KeyD'},l:'O',c:'#6366f1'});render();updateList();save();toast('Stick added');}
-
-function save(){localStorage.setItem('nexus_gpad_v8',JSON.stringify(els));}
-function toast(msg){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
-
-var ma=document.getElementById('mouseArea');
-ma.style.cssText='left:25%;top:15%;width:50%;height:60%;';
-var maA=false,maL={x:0,y:0};
-ma.addEventListener('pointerdown',function(e){maA=true;maL={x:e.clientX,y:e.clientY};});
-ma.addEventListener('pointermove',function(e){if(!maA)return;e.preventDefault();maL={x:e.clientX,y:e.clientY};});
-ma.addEventListener('pointerup',function(){maA=false;});
-
+// INIT
 render();fillKeys();
 </script>
 </body>
