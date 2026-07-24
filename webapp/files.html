@@ -1,13 +1,118 @@
-﻿<!DOCTYPE html><html><head><meta charset="UTF-8"><title>File Drop - Nexus</title>
-<style>body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-.card{background:#151530;border-radius:20px;padding:40px;width:500px;text-align:center;border:1px solid #2a2a4a}
-h1{background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.dropzone{border:3px dashed #2a2a4a;border-radius:16px;padding:60px;margin:20px 0;transition:all 0.3s;cursor:pointer}
-.dropzone:hover,.dropzone.dragover{border-color:#6366f1;background:rgba(99,102,241,0.05)}
-.dropzone p{color:#888;font-size:14px}.dropzone .icon{font-size:48px;margin-bottom:12px}
-.file-list{text-align:left;margin-top:16px}.file-item{background:#0a0a1a;padding:10px;border-radius:8px;margin:4px 0;font-size:13px}</style></head>
-<body><div class="card"><h1>File Drop</h1><p style="color:#888">Drag & drop files to transfer</p>
-<div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()"><div class="icon">📁</div><p>Drop files here or click to browse</p></div>
-<input type="file" id="fileInput" multiple style="display:none" onchange="handleFiles(this.files)">
-<div class="file-list" id="fileList"></div></div>
-<script>document.getElementById('dropzone').addEventListener('dragover',function(e){e.preventDefault();this.classList.add('dragover')});document.getElementById('dropzone').addEventListener('dragleave',function(){this.classList.remove('dragover')});document.getElementById('dropzone').addEventListener('drop',function(e){e.preventDefault();this.classList.remove('dragover');handleFiles(e.dataTransfer.files)});function handleFiles(files){var list=document.getElementById('fileList');list.innerHTML='';for(var i=0;i<files.length;i++){var item=document.createElement('div');item.className='file-item';item.textContent=files[i].name+' ('+(files[i].size/1024).toFixed(1)+' KB)';list.appendChild(item)}}</script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Transfer - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh}
+nav{background:#0d0d24;border-bottom:1px solid #1a1a3e;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:18px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+.nav-links a{color:#888;text-decoration:none;font-size:12px;margin-left:12px}
+.container{max-width:700px;margin:0 auto;padding:30px 20px}
+h1{font-size:28px;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
+.sub{text-align:center;color:#888;margin-bottom:24px;font-size:13px}
+.dropzone{border:3px dashed #2a2a4a;border-radius:16px;padding:40px;text-align:center;cursor:pointer;transition:all 0.3s;margin-bottom:20px}
+.dropzone:hover,.dropzone.drag{border-color:#6366f1;background:rgba(99,102,241,0.05)}
+.dropzone .icon{font-size:48px;margin-bottom:10px}
+.dropzone p{color:#888;font-size:13px}
+.file-list{display:flex;flex-direction:column;gap:8px}
+.file-item{background:#151530;border:1px solid #2a2a4a;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.file-item .info .name{font-size:13px;font-weight:600}
+.file-item .info .size{font-size:10px;color:#888}
+.file-item .actions{display:flex;gap:6px}
+.btn{padding:8px 16px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;color:#fff}
+.btn-download{background:#22c55e}.btn-delete{background:#ef4444}.btn-send{background:#6366f1}
+input[type=file]{display:none}
+.alert{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:10px;margin-top:10px;font-size:12px;color:#22c55e;display:none;text-align:center}
+</style>
+</head>
+<body>
+<nav>
+<a href="/" class="logo">Nexus Remote</a>
+<div class="nav-links">
+<a href="/">Home</a>
+<a href="/dashboard">Dashboard</a>
+<a href="/viewer">Viewer</a>
+<a href="/gamepad">Gamepad</a>
+</div>
+</nav>
+
+<div class="container">
+<h1>File Transfer</h1>
+<p class="sub">Drag & drop files to send between devices</p>
+
+<div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+<div class="icon">📁</div>
+<p>Drop files here or click to browse</p>
+<p style="font-size:10px;color:#555;margin-top:4px">Files are encrypted during transfer</p>
+</div>
+<input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+
+<div class="alert" id="alert"></div>
+
+<h3 style="font-size:14px;color:#888;margin-bottom:10px">Recent Files</h3>
+<div class="file-list" id="fileList">
+<div class="file-item">
+<div class="info"><div class="name">No files yet</div><div class="size">Upload files to see them here</div></div>
+</div>
+</div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileList = document.getElementById('fileList');
+let files = [];
+
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e) => {
+e.preventDefault(); dropzone.classList.remove('drag');
+handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(newFiles) {
+for(let i=0; i<newFiles.length; i++) {
+const file = newFiles[i];
+files.push({name: file.name, size: file.size, time: new Date().toLocaleTimeString()});
+
+// Read and send via API
+const reader = new FileReader();
+reader.onload = function() {
+const base64 = reader.result.split(',')[1];
+fetch('/send_file', {
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body: JSON.stringify({filename: file.name, size: file.size, data: base64, to: 'connected-device'})
+}).then(r => r.json()).then(d => {
+if(d.status === 'received') showAlert('File sent: ' + file.name);
+});
+};
+reader.readAsDataURL(file);
+}
+renderFiles();
+}
+
+function renderFiles() {
+if(files.length === 0) {
+fileList.innerHTML = '<div class="file-item"><div class="info"><div class="name">No files yet</div><div class="size">Upload files to see them here</div></div></div>';
+return;
+}
+fileList.innerHTML = files.map((f,i) => 
+<div class="file-item">
+<div class="info"><div class="name"></div><div class="size"> - </div></div>
+<div class="actions">
+<button class="btn btn-download" onclick="downloadFile()">Download</button>
+<button class="btn btn-delete" onclick="deleteFile()">Delete</button>
+</div>
+</div>).join('');
+}
+
+function downloadFile(i) { alert('Download: ' + files[i].name); }
+function deleteFile(i) { files.splice(i,1); renderFiles(); }
+function formatSize(b) { return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'; }
+function showAlert(m) { const a=document.getElementById('alert'); a.textContent=m; a.style.display='block'; setTimeout(()=>a.style.display='none',3000); }
+</script>
+</body>
+</html>

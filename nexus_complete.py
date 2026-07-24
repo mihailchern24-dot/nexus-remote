@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # NEXUS REMOTE v4.0 - COMPLETE APPLICATION
 import tkinter as tk
@@ -121,7 +121,7 @@ class NexusComplete:
         
         # ==== HEADER ====
         h = tk.Frame(m, bg='#0a0a1a'); h.pack(fill='x', pady=(0,8))
-        tk.Label(h, text='⚡ Nexus Remote v4.0', font=('Segoe UI', 18, 'bold'), fg='#6366f1', bg='#0a0a1a').pack(side='left')
+        tk.Label(h, text='? Nexus Remote v4.0', font=('Segoe UI', 18, 'bold'), fg='#6366f1', bg='#0a0a1a').pack(side='left')
         
         # User info
         uf = tk.Frame(h, bg='#0a0a1a'); uf.pack(side='right')
@@ -133,7 +133,7 @@ class NexusComplete:
         nb = ttk.Notebook(m); nb.pack(fill='both', expand=True)
         
         # ===== TAB 1: HOME (Connect + Share) =====
-        t1 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t1, text='  🏠 Home  ')
+        t1 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t1, text='  ?? Home  ')
         
         # LEFT - Connect
         left = tk.Frame(t1, bg='#0a0a1a'); left.pack(side='left', fill='both', expand=True, padx=(0,5))
@@ -141,7 +141,7 @@ class NexusComplete:
         
         # My Info
         c1 = self.card(left); c1.pack(fill='x', pady=4)
-        tk.Label(c1, text='📱 My Device Info', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        tk.Label(c1, text='?? My Device Info', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
         for l,v,c in [('Device ID', DEVICE_ID, '#e0e0e0'), ('MAC', LOCAL_MAC, '#22c55e'), ('Code', ACCESS_CODE, '#f59e0b'), ('Peer', PEER[:24]+'...', '#888'), ('Platform', platform.system(), '#888')]:
             r = tk.Frame(c1, bg='#151530'); r.pack(fill='x', padx=12, pady=1)
             tk.Label(r, text=f'{l}:', font=('Segoe UI', 9), fg='#888', bg='#151530').pack(side='left')
@@ -149,19 +149,19 @@ class NexusComplete:
         
         # Connect
         c2 = self.card(left); c2.pack(fill='x', pady=4)
-        tk.Label(c2, text='🔗 Quick Connect', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        tk.Label(c2, text='?? Quick Connect', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
         self.peer_e = self.entry(c2, 'Enter Peer ID or paste link...'); self.peer_e.pack(fill='x', padx=12, pady=3)
         bf = tk.Frame(c2, bg='#151530'); bf.pack(fill='x', padx=12, pady=(5,8))
-        self.btn(bf, '🔗 Connect', '#22c55e', self.do_connect).pack(side='left', padx=2)
-        self.btn(bf, '📷 Scan QR', '#6366f1', self.scan_qr).pack(side='left', padx=2)
-        self.btn(bf, '📋 Copy ID', '#888', lambda: self.root.clipboard_append(PEER)).pack(side='left', padx=2)
+        self.btn(bf, '?? Connect', '#22c55e', self.do_connect).pack(side='left', padx=2)
+        self.btn(bf, '?? Scan QR', '#6366f1', self.scan_qr).pack(side='left', padx=2)
+        self.btn(bf, '?? Copy ID', '#888', lambda: self.root.clipboard_append(PEER)).pack(side='left', padx=2)
         
         self.conn_lbl = tk.Label(c2, text='Ready to connect', font=('Segoe UI', 9), fg='#888', bg='#151530')
         self.conn_lbl.pack(anchor='w', padx=12, pady=(0,5))
         
         # Share Access (RIGHT)
         c3 = self.card(right); c3.pack(fill='x', pady=4)
-        tk.Label(c3, text='🔗 Share My Screen', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        tk.Label(c3, text='?? Share My Screen', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
         tk.Label(c3, text='Generate temporary access link', font=('Segoe UI', 9), fg='#888', bg='#151530').pack(anchor='w', padx=12)
         
         sf = tk.Frame(c3, bg='#151530'); sf.pack(fill='x', padx=12, pady=5)
@@ -173,21 +173,21 @@ class NexusComplete:
         tk.Entry(c3, textvariable=self.share_link_var, font=('Segoe UI', 9), bg='#0f0f1a', fg='#22c55e', relief='flat', bd=1, state='readonly').pack(fill='x', padx=12, pady=3)
         
         bf2 = tk.Frame(c3, bg='#151530'); bf2.pack(fill='x', padx=12, pady=(5,8))
-        self.btn(bf2, '🔗 Generate Link', '#f59e0b', lambda: self.share_link_var.set(self.generate_share_link({'15 min':15,'30 min':30,'1 hour':60,'4 hours':240,'24 hours':1440}[dur_var.get()]))).pack(side='left', padx=2)
-        self.btn(bf2, '📋 Copy', '#888', lambda: self.root.clipboard_append(self.share_link_var.get())).pack(side='left', padx=2)
+        self.btn(bf2, '?? Generate Link', '#f59e0b', lambda: self.share_link_var.set(self.generate_share_link({'15 min':15,'30 min':30,'1 hour':60,'4 hours':240,'24 hours':1440}[dur_var.get()]))).pack(side='left', padx=2)
+        self.btn(bf2, '?? Copy', '#888', lambda: self.root.clipboard_append(self.share_link_var.get())).pack(side='left', padx=2)
         
         # Stream Controls
         c4 = self.card(right); c4.pack(fill='x', pady=4)
-        tk.Label(c4, text='📺 Stream Control', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
-        self.cap_btn = self.btn(c4, '▶ Start Capture', '#22c55e', self.toggle_capture, 180)
+        tk.Label(c4, text='?? Stream Control', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        self.cap_btn = self.btn(c4, '? Start Capture', '#22c55e', self.toggle_capture, 180)
         self.cap_btn.pack(pady=10)
         
         # ===== TAB 2: DEVICES =====
-        t2 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t2, text='  💻 Devices  ')
+        t2 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t2, text='  ?? Devices  ')
         
         # Add device
         c5 = self.card(t2); c5.pack(fill='x', pady=4)
-        tk.Label(c5, text='➕ Add Device (requires code from owner)', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        tk.Label(c5, text='? Add Device (requires code from owner)', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
         
         af = tk.Frame(c5, bg='#151530'); af.pack(fill='x', padx=12)
         tk.Label(af, text='Name:', font=('Segoe UI', 9), fg='#888', bg='#151530').pack(side='left')
@@ -197,22 +197,22 @@ class NexusComplete:
         tk.Label(af2, text='Secret Code/Link:', font=('Segoe UI', 9), fg='#888', bg='#151530').pack(side='left')
         code_e = tk.Entry(af2, font=('Segoe UI', 9), bg='#0f0f1a', fg='white', relief='flat', bd=1, width=30); code_e.pack(side='left', padx=5); code_e.insert(0, 'Paste code or link from owner...')
         
-        self.btn(c5, '➕ Add Device', '#22c55e', lambda: self.add_device(name_e.get(), code_e.get()), 140).pack(pady=(8,10))
+        self.btn(c5, '? Add Device', '#22c55e', lambda: self.add_device(name_e.get(), code_e.get()), 140).pack(pady=(8,10))
         
         # Device list
         c6 = self.card(t2); c6.pack(fill='both', expand=True, pady=4)
         hdr = tk.Frame(c6, bg='#151530'); hdr.pack(fill='x', padx=12, pady=(8,5))
-        tk.Label(hdr, text='💻 My Devices', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(side='left')
-        self.btn(hdr, '🔄', '#6366f1', self.refresh_devices, 40, 28).pack(side='right')
+        tk.Label(hdr, text='?? My Devices', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(side='left')
+        self.btn(hdr, '??', '#6366f1', self.refresh_devices, 40, 28).pack(side='right')
         
         self.dev_list = tk.Frame(c6, bg='#151530'); self.dev_list.pack(fill='both', expand=True, padx=12, pady=(0,8))
         self.refresh_devices()
         
         # ===== TAB 3: SECURITY =====
-        t3 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t3, text='  🔒 Security  ')
+        t3 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t3, text='  ?? Security  ')
         
         c7 = self.card(t3); c7.pack(fill='both', expand=True, pady=4)
-        tk.Label(c7, text='🔒 Security Settings', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
+        tk.Label(c7, text='?? Security Settings', font=('Segoe UI', 12, 'bold'), fg='#6366f1', bg='#151530').pack(anchor='w', padx=12, pady=(8,4))
         tk.Label(c7, text='Choose protection level for your account', font=('Segoe UI', 9), fg='#888', bg='#151530').pack(anchor='w', padx=12)
         
         sec_items = [
@@ -240,14 +240,14 @@ class NexusComplete:
             
             tk.Label(sf, text=desc, font=('Segoe UI', 8), fg='#888', bg='#151530').pack(side='right')
         
-        self.btn(c7, '💾 Save Security Settings', '#6366f1', self.save_security).pack(pady=(10,8))
+        self.btn(c7, '?? Save Security Settings', '#6366f1', self.save_security).pack(pady=(10,8))
         
         # Learn more link
-        tk.Label(c7, text='📚 Learn more about security: nexus-remote.onrender.com/docs', font=('Segoe UI', 9), fg='#6366f1', bg='#151530', cursor='hand2').pack(pady=(0,10))
+        tk.Label(c7, text='?? Learn more about security: nexus-remote.onrender.com/docs', font=('Segoe UI', 9), fg='#6366f1', bg='#151530', cursor='hand2').pack(pady=(0,10))
         tk.Label(c7, text='Click to open documentation in browser', font=('Segoe UI', 8), fg='#888', bg='#151530').pack()
         
         # ===== TAB 4: LOG =====
-        t4 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t4, text='  📝 Log  ')
+        t4 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t4, text='  ?? Log  ')
         self.log_text = scrolledtext.ScrolledText(t4, font=('Consolas', 9), bg='#0f0f1a', fg='#e0e0e0', relief='flat')
         self.log_text.pack(fill='both', expand=True, padx=5, pady=5)
         self.log_text.tag_config('error', foreground='#ef4444')
@@ -256,7 +256,7 @@ class NexusComplete:
         self.log('Application started', 'SUCCESS')
         
         # ===== TAB 5: STATS =====
-        t5 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t5, text='  📊 Stats  ')
+        t5 = tk.Frame(nb, bg='#0a0a1a'); nb.add(t5, text='  ?? Stats  ')
         self.stats_text = scrolledtext.ScrolledText(t5, font=('Consolas', 10), bg='#0f0f1a', fg='#22c55e', relief='flat')
         self.stats_text.pack(fill='both', expand=True, padx=5, pady=5)
         self.update_stats()
@@ -264,8 +264,8 @@ class NexusComplete:
         # ==== BOTTOM BAR ====
         bar = tk.Frame(m, bg='#121226', height=26); bar.pack(fill='x', side='bottom', pady=(6,0))
         tk.Label(bar, text=f'{SERVER} | v4.0 | E2E Encrypted', font=('Segoe UI', 8), fg='#888', bg='#121226').pack(side='left', padx=10)
-        self.btn(bar, '🌐 Docs', '#6366f1', lambda: webbrowser.open(f'{SERVER}/docs'), 70, 22).pack(side='right', padx=4)
-        self.btn(bar, '🌐 Web', '#6366f1', lambda: webbrowser.open(SERVER), 70, 22).pack(side='right', padx=4)
+        self.btn(bar, '?? Docs', '#6366f1', lambda: webbrowser.open(f'{SERVER}/docs'), 70, 22).pack(side='right', padx=4)
+        self.btn(bar, '?? Web', '#6366f1', lambda: webbrowser.open(SERVER), 70, 22).pack(side='right', padx=4)
     
     # ========== ACTIONS ==========
     def add_device(self, name, code):
@@ -291,16 +291,16 @@ class NexusComplete:
             r = tk.Frame(self.dev_list, bg='#1e1e38', bd=0, highlightthickness=1, highlightbackground='#2a2a4a')
             r.pack(fill='x', pady=2)
             
-            status_icon = '🟢' if d.get('status')=='online' else '🔴' if d.get('status')=='offline' else '🟡'
+            status_icon = '??' if d.get('status')=='online' else '??' if d.get('status')=='offline' else '??'
             tk.Label(r, text=f'{status_icon} {d["name"]}', font=('Segoe UI', 10, 'bold'), fg='#e0e0e0', bg='#1e1e38').pack(side='left', padx=10, pady=8)
             if d.get('mac'): tk.Label(r, text=f'MAC: {d["mac"]}', font=('Segoe UI', 8), fg='#22c55e', bg='#1e1e38').pack(side='left', padx=5)
             tk.Label(r, text=d.get('status','pending').upper(), font=('Segoe UI', 8), fg='#f59e0b', bg='#1e1e38').pack(side='left', padx=5)
             
             bf = tk.Frame(r, bg='#1e1e38'); bf.pack(side='right', padx=8)
-            self.btn(bf, '⚡ Wake', '#f59e0b', lambda x=d.get('mac',''): self.wake_device(x) if x else None, 65, 22).pack(side='left', padx=2)
-            self.btn(bf, '😴 Sleep', '#888', lambda: None, 65, 22).pack(side='left', padx=2)
-            self.btn(bf, '📺 View', '#22c55e', lambda: None, 65, 22).pack(side='left', padx=2)
-            self.btn(bf, '✕', '#ef4444', lambda x=i: self.remove_device(x), 28, 22).pack(side='left', padx=2)
+            self.btn(bf, '? Wake', '#f59e0b', lambda x=d.get('mac',''): self.wake_device(x) if x else None, 65, 22).pack(side='left', padx=2)
+            self.btn(bf, '?? Sleep', '#888', lambda: None, 65, 22).pack(side='left', padx=2)
+            self.btn(bf, '?? View', '#22c55e', lambda: None, 65, 22).pack(side='left', padx=2)
+            self.btn(bf, '?', '#ef4444', lambda x=i: self.remove_device(x), 28, 22).pack(side='left', padx=2)
     
     def wake_device(self, mac):
         if self.send_wol(mac):
@@ -323,12 +323,12 @@ class NexusComplete:
         if not self.connected: return messagebox.showwarning('Error', 'Connect first')
         if not self.streaming:
             self.streaming = True; self.frames = 0
-            self.cap_btn.config(text='⏹ Stop', bg='#ef4444')
+            self.cap_btn.config(text='? Stop', bg='#ef4444')
             self.log('Capture started')
             threading.Thread(target=self.capture_loop, daemon=True).start()
         else:
             self.streaming = False
-            self.cap_btn.config(text='▶ Start Capture', bg='#22c55e')
+            self.cap_btn.config(text='? Start Capture', bg='#22c55e')
             self.log(f'Capture stopped ({self.frames} frames)')
     
     def capture_loop(self):
@@ -355,9 +355,9 @@ class NexusComplete:
     
     def update_stats(self):
         self.stats_text.delete('1.0','end')
-        self.stats_text.insert('end', '╔══════════════════════════════════════╗\n')
-        self.stats_text.insert('end', '║     📊 NEXUS REMOTE STATS            ║\n')
-        self.stats_text.insert('end', '╚══════════════════════════════════════╝\n\n')
+        self.stats_text.insert('end', '�======================================�\n')
+        self.stats_text.insert('end', '�     ?? NEXUS REMOTE STATS            �\n')
+        self.stats_text.insert('end', 'L======================================-\n\n')
         self.stats_text.insert('end', f'Device: {DEVICE_ID}\n')
         self.stats_text.insert('end', f'MAC: {LOCAL_MAC}\n')
         self.stats_text.insert('end', f'Connected: {self.target or "None"}\n')
@@ -373,3 +373,4 @@ class NexusComplete:
 
 if __name__ == '__main__':
     app = NexusComplete(); app.run()
+
