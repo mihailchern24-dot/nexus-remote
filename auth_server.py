@@ -56,7 +56,8 @@ class AuthDB:
         self.conn.commit()
         return c.rowcount > 0
 
-peers = {}\ndb = AuthDB()
+peers = {}
+db = AuthDB()
 
 class AuthHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -154,6 +155,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     print(f"Nexus Remote Auth Server on port {port}")
     HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
+
 
 
 
