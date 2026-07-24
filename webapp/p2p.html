@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Nexus P2P</title>
+<style>
+body{font-family:Arial;background:#0a0a1a;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.card{background:#151530;padding:30px;border-radius:16px;text-align:center;max-width:500px}
+h1{color:#6366f1}input{width:100%;padding:10px;margin:8px 0;border-radius:8px;background:#0a0a1a;color:#fff;border:1px solid #2a2a4a}
+.btn{padding:12px 24px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin:4px;color:#fff}
+.btn-primary{background:#6366f1}.btn-success{background:#22c55e}.btn-danger{background:#ef4444}
+video{width:100%;max-width:400px;border-radius:8px;margin:10px 0;background:#000}
+#status{color:#888;font-size:12px;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Nexus P2P</h1>
+<p style="color:#888">Direct device-to-device connection via WebRTC</p>
+<input id="peerId" placeholder="Remote Peer ID">
+<div>
+<button class="btn btn-primary" onclick="createOffer()">Call</button>
+<button class="btn btn-success" onclick="answerCall()">Answer</button>
+<button class="btn btn-danger" onclick="hangUp()">Hang Up</button>
+</div>
+<p id="status">Ready</p>
+<video id="localVideo" autoplay muted></video>
+<video id="remoteVideo" autoplay></video>
+</div>
+<script>
+var pc=null,localStream=null;
+var cfg={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+
+async function start(){try{localStream=await navigator.mediaDevices.getDisplayMedia({video:true});document.getElementById('localVideo').srcObject=localStream;document.getElementById('status').textContent='Screen shared'}catch(e){document.getElementById('status').textContent='Screen access denied'}}
+function createPC(){pc=new RTCPeerConnection(cfg);pc.onicecandidate=e=>{if(e.candidate)send({type:'candidate',candidate:e.candidate})};pc.ontrack=e=>{document.getElementById('remoteVideo').srcObject=e.streams[0]};localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));return pc}
+async function createOffer(){await start();createPC();var offer=await pc.createOffer();await pc.setLocalDescription(offer);send({type:'offer',sdp:pc.localDescription});document.getElementById('status').textContent='Offer sent'}
+async function answerCall(){await start();createPC();pc.ondatachannel=e=>{e.channel.onmessage=ev=>{var data=JSON.parse(ev.data);if(data.type==='offer'){pc.setRemoteDescription(data.sdp).then(()=>pc.createAnswer()).then(a=>pc.setLocalDescription(a)).then(()=>send({type:'answer',sdp:pc.localDescription}))}else if(data.type==='candidate'){pc.addIceCandidate(data.candidate)}}};document.getElementById('status').textContent='Waiting for call...'}
+function send(data){console.log('Send:',data)}
+function hangUp(){if(pc)pc.close();if(localStream)localStream.getTracks().forEach(t=>t.stop());pc=null;document.getElementById('status').textContent='Disconnected'}
+start();
+</script>
+</body>
+</html>
