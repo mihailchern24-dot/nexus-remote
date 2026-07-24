@@ -1,163 +1,84 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# auth_server.py - Nexus Remote Full Auth Server
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import json, os, time, hashlib, secrets, sqlite3
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 
-DB_FILE = "/app/nexus_auth.db" if os.path.exists("/app") else "nexus_auth.db"
+DB = "/app/nexus_auth.db" if os.path.exists("/app") else "nexus_auth.db"
 
-class AuthDB:
+class DB:
     def __init__(self):
-        self.conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-        c = self.conn.cursor()
-        c.executescript('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE,
-                password_hash TEXT,
-                token TEXT,
-                peer_id TEXT,
-                created TEXT,
-                last_login TEXT
-            );
-        ''')
-        self.conn.commit()
-    
-    def register(self, email, password):
+        self.c = sqlite3.connect(DB, check_same_thread=False)
+        self.c.executescript("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,email TEXT UNIQUE,pass TEXT,token TEXT,peer TEXT,created TEXT)")
+        self.c.commit()
+    def reg(self,e,p):
         try:
-            token = secrets.token_hex(32)
-            peer_id = f"nexus-{hashlib.md5(email.encode()).hexdigest()[:12]}"
-            pw_hash = hashlib.sha256(password.encode()).hexdigest()
-            now = datetime.now().isoformat()
-            c = self.conn.cursor()
-            c.execute('INSERT INTO users (email, password_hash, token, peer_id, created, last_login) VALUES (?,?,?,?,?,?)',
-                     (email, pw_hash, token, peer_id, now, now))
-            self.conn.commit()
-            return {"status": "registered", "token": token, "peer_id": peer_id}
-        except sqlite3.IntegrityError:
-            return {"error": "Email already registered"}
-    
-    def login(self, email, password):
-        pw_hash = hashlib.sha256(password.encode()).hexdigest()
-        c = self.conn.cursor()
-        c.execute('SELECT token, peer_id FROM users WHERE email=? AND password_hash=?', (email, pw_hash))
-        row = c.fetchone()
-        if row:
-            c.execute('UPDATE users SET last_login=? WHERE email=?', (datetime.now().isoformat(), email))
-            self.conn.commit()
-            return {"status": "ok", "token": row[0], "peer_id": row[1]}
-        return {"error": "Invalid email or password"}
-    
-    def reset_password(self, email, new_password):
-        pw_hash = hashlib.sha256(new_password.encode()).hexdigest()
-        c = self.conn.cursor()
-        c.execute('UPDATE users SET password_hash=? WHERE email=?', (pw_hash, email))
-        self.conn.commit()
-        return c.rowcount > 0
+            t=secrets.token_hex(32); ph=hashlib.sha256(p.encode()).hexdigest(); pr=f"nexus-{hashlib.md5(e.encode()).hexdigest()[:12]}"
+            self.c.execute("INSERT INTO users(email,pass,token,peer,created) VALUES(?,?,?,?,?)",(e,ph,t,pr,datetime.now().isoformat()))
+            self.c.commit(); return {"status":"registered","token":t,"peer_id":pr}
+        except: return {"error":"Email exists"}
+    def login(self,e,p):
+        ph=hashlib.sha256(p.encode()).hexdigest()
+        r=self.c.execute("SELECT token,peer FROM users WHERE email=? AND pass=?",(e,ph)).fetchone()
+        if r: return {"status":"ok","token":r[0],"peer_id":r[1]}
+        return {"error":"Invalid credentials"}
+    def reset(self,e,p):
+        ph=hashlib.sha256(p.encode()).hexdigest()
+        self.c.execute("UPDATE users SET pass=? WHERE email=?",(ph,e)); self.c.commit()
+        return self.c.rowcount>0
 
-peers = {}
-db = AuthDB()
+db=DB()
+peers={}
+streams={}
+messages={}
 
-class AuthHandler(BaseHTTPRequestHandler):
-    def do_HEAD(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.end_headers()
-    
+class H(BaseHTTPRequestHandler):
+    def _json(self,d,c=200):
+        self.send_response(c); self.send_header("Content-Type","application/json"); self.send_header("Access-Control-Allow-Origin","*"); self.end_headers()
+        self.wfile.write(json.dumps(d).encode())
+    def _html(self,f):
+        try:
+            p=os.path.join("/app/webapp",f) if os.path.exists("/app") else os.path.join("webapp",f)
+            with open(p,"r",encoding="utf-8") as fh: h=fh.read()
+            self.send_response(200); self.send_header("Content-Type","text/html"); self.end_headers(); self.wfile.write(h.encode())
+        except: self._json({"error":"Page not found"},404)
+    def do_HEAD(self): self.send_response(200); self.end_headers()
     def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.end_headers()
-    
+        self.send_response(200); self.send_header("Access-Control-Allow-Origin","*")
+        self.send_header("Access-Control-Allow-Methods","GET,POST,OPTIONS"); self.send_header("Access-Control-Allow-Headers","Content-Type"); self.end_headers()
     def do_GET(self):
-        pages = {
-            '/': 'index.html',
-            '/login': 'login.html',
-            '/register': 'register.html',
-            '/reset': 'reset.html',
-            '/dashboard': 'dashboard.html',
-            '/download': 'download.html',
-            '/viewer': 'viewer.html',
-            '/speedtest': 'speedtest.html',
-            '/status': 'status.html',
-            '/docs': 'docs.html',
-            '/blog': 'blog.html',
-            '/support': 'support.html',
-            '/forum': 'forum.html',
-            '/remote': 'remote.html',
-            '/files': 'files.html',
-            '/gamepad': 'gamepad.html',
-            '/p2p': 'p2p.html',
-            '/wake': 'wake_stream.html',
-            '/viewer': 'viewer.html',
-            '/speedtest': 'speedtest.html',
-            '/wake': 'wake_stream.html',
-        }
-        
-        if self.path in pages:
-            self.serve_html(pages[self.path])
-        elif self.path == '/api/status':
-            self.json_response({"status": "running", "server": "Nexus Remote v4.0"})
-        else:
-            self.json_response({"error": "Not found"}, 404)
-    
+        pages={"/":"index.html","/login":"login.html","/register":"register.html","/reset":"reset.html","/dashboard":"dashboard.html","/download":"download.html","/viewer":"viewer.html","/speedtest":"speedtest.html","/status":"status.html","/docs":"docs.html","/blog":"blog.html","/support":"support.html","/forum":"forum.html","/remote":"remote.html","/files":"files.html","/wake":"wake_stream.html","/gamepad":"gamepad.html","/p2p":"p2p.html"}
+        if self.path in pages: return self._html(pages[self.path])
+        if self.path=="/api/status": return self._json({"status":"running","server":"Nexus Remote v4.0","peers":len(peers),"streams":len(streams)})
+        if self.path=="/peers": return self._json({"peers":list(peers.keys()),"count":len(peers)})
+        self._json({"error":"Not found"},404)
     def do_POST(self):
-        length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(length).decode() if length > 0 else '{}'
-        try:
-            data = json.loads(body)
-        except:
-            data = {}
-        
-        if self.path == '/api/auth/register':
-            result = db.register(data.get('email', ''), data.get('password', ''))
-            self.json_response(result)
-        elif self.path == '/api/auth/login':
-            result = db.login(data.get('email', ''), data.get('password', ''))
-            self.json_response(result)
-        elif self.path == '/api/auth/reset':
-            ok = db.reset_password(data.get('email', ''), data.get('new_password', ''))
-            if ok:
-                self.json_response({"status": "password_reset"})
-            else:
-                self.json_response({"error": "Email not found"}, 400)
-        else:
-            self.json_response({"error": "Not found"}, 404)
-    
-    def serve_html(self, filename):
-        path = os.path.join('/app/webapp', filename)
-        if not os.path.exists(path):
-            path = os.path.join('webapp', filename)
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                html = f.read()
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write(html.encode())
-        except Exception as e:
-            self.json_response({"error": str(e)}, 500)
-    
-    def json_response(self, data, code=200):
-        self.send_response(code)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-    
-    def log_message(self, format, *args):
-        pass
+        l=int(self.headers.get("Content-Length",0)); b=self.rfile.read(l).decode() if l>0 else "{}"
+        try: d=json.loads(b)
+        except: d={}
+        if self.path=="/api/auth/register": return self._json(db.reg(d.get("email",""),d.get("password","")))
+        if self.path=="/api/auth/login": return self._json(db.login(d.get("email",""),d.get("password","")))
+        if self.path=="/api/auth/reset":
+            if db.reset(d.get("email",""),d.get("new_password","")): return self._json({"status":"password_reset"})
+            return self._json({"error":"Not found"},400)
+        if self.path=="/register":
+            p=d.get("peer_id","")
+            if p: peers[p]={"platform":d.get("platform","?"),"time":datetime.now().isoformat()}; return self._json({"status":"registered","peer_id":p})
+            return self._json({"error":"peer_id required"},400)
+        if self.path=="/start_stream":
+            s=f"stream_{int(time.time())}"; streams[s]={"source":d.get("source",""),"target":d.get("target",""),"status":"active"}
+            return self._json({"status":"streaming","stream_id":s})
+        if self.path=="/send_frame": return self._json({"status":"sent"})
+        if self.path=="/get_frame": return self._json({"type":"video","data":"TEST_FRAME","from":"test"})
+        if self.path=="/stop_stream":
+            sid=d.get("stream_id","")
+            if sid in streams: streams[sid]["status"]="stopped"; return self._json({"status":"stopped"})
+            return self._json({"error":"Not found"},404)
+        if self.path=="/wol": return self._json({"status":"wol_sent","success":True})
+        if self.path=="/clipboard": return self._json({"status":"synced"})
+        self._json({"error":"Not found"},404)
+    def log_message(self,*a): pass
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    print(f"Nexus Remote Auth Server on port {port}")
-    HTTPServer(('0.0.0.0', port), AuthHandler).serve_forever()
-
-
-
-
-
-
+if __name__=="__main__":
+    p=int(os.environ.get("PORT",10000))
+    print(f"Nexus Remote v4.0 on port {p}")
+    HTTPServer(("0.0.0.0",p),H).serve_forever()
