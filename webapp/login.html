@@ -1,134 +1,131 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Nexus Remote</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0a0a1a;
-            color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .card {
-            background: #151530;
-            border-radius: 20px;
-            padding: 40px;
-            width: 420px;
-            border: 1px solid #2a2a4a;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        .logo { text-align: center; font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-        .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 30px; }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; margin-bottom: 6px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .input-group input {
-            width: 100%; padding: 12px 16px; border-radius: 10px;
-            border: 1px solid #2a2a4a; background: #0a0a1a; color: #fff; font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        .input-group input:focus { outline: none; border-color: #6366f1; }
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 10px;
-            font-size: 14px; font-weight: 600; cursor: pointer; margin: 6px 0;
-            transition: all 0.3s;
-        }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-primary:hover { background: #5558e6; transform: translateY(-1px); }
-        .btn-google { background: #4285f4; color: #fff; }
-        .btn-github { background: #24292e; color: #fff; }
-        .divider { text-align: center; color: #555; margin: 20px 0; }
-        .divider::before, .divider::after { content: " —— "; }
-        .links { text-align: center; margin-top: 20px; font-size: 13px; }
-        .links a { color: #6366f1; text-decoration: none; }
-        .links a:hover { text-decoration: underline; }
-        .msg { font-size: 12px; text-align: center; margin-top: 8px; display: none; padding: 8px; border-radius: 6px; }
-        .msg.error { background: rgba(239,68,68,0.1); color: #ef4444; }
-        .msg.success { background: rgba(34,197,94,0.1); color: #22c55e; }
-        .back-link { display: block; text-align: center; color: #888; font-size: 13px; margin-top: 20px; text-decoration: none; }
-        .back-link:hover { color: #fff; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#151530;border-radius:20px;padding:36px;width:400px;border:1px solid #2a2a4a;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.logo{text-align:center;font-size:26px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.sub{text-align:center;color:#888;font-size:12px;margin-bottom:24px}
+.inp{margin-bottom:14px}
+.inp label{display:block;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.inp input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px}
+.inp input:focus{outline:none;border-color:#6366f1}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin:6px 0;color:#fff}
+.btn-primary{background:#6366f1}.btn-google{background:#4285f4}.btn-github{background:#333}.btn-ms{background:#0078d4}
+.msg{padding:8px;border-radius:6px;font-size:11px;text-align:center;margin:8px 0;display:none}
+.msg.error{background:rgba(239,68,68,0.1);color:#ef4444;display:block}
+.msg.success{background:rgba(34,197,94,0.1);color:#22c55e;display:block}
+.divider{text-align:center;color:#555;margin:16px 0;font-size:12px}
+.links{text-align:center;margin-top:16px;font-size:12px}
+.links a{color:#6366f1;text-decoration:none}
+.captcha-box{background:#0a0a1a;border:1px solid #2a2a4a;border-radius:8px;padding:10px;margin:10px 0;text-align:center}
+.captcha-box span{font-size:20px;font-weight:bold;color:#f59e0b;letter-spacing:3px}
+.captcha-box input{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #2a2a4a;background:#151530;color:#fff;text-align:center;font-size:14px}
+</style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo">⚡ Nexus Remote</div>
-        <p class="subtitle">Welcome back! Sign in to your account</p>
-        
-        <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="your@email.com" autofocus>
-        </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password">
-        </div>
-        
-        <div class="msg error" id="error"></div>
-        <div class="msg success" id="success"></div>
-        
-        <button class="btn btn-primary" onclick="login()">Sign In</button>
-        
-        <div class="divider">or continue with</div>
-        
-        <button class="btn btn-google" onclick="oauthLogin('google')">🔵 Google</button>
-        <button class="btn btn-github" onclick="oauthLogin('github')">🐙 GitHub</button>
-        
-        <div class="links">
-            <a href="/register">Create account</a> &nbsp;•&nbsp;
-            <a href="/reset">Forgot password?</a>
-        </div>
-        
-        <a href="/" class="back-link">← Back to home</a>
-    </div>
+<div class="card">
+<div class="logo">Nexus Remote</div>
+<div class="sub">Welcome back! Sign in to your account</div>
 
-    <script>
-        async function login() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!email || !password) return showMsg('Please fill all fields', 'error');
-            
-            try {
-                const resp = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
-                });
-                const data = await resp.json();
-                
-                if (data.token) {
-                    localStorage.setItem('nexus_token', data.token);
-                    localStorage.setItem('nexus_peer_id', data.peer_id);
-                    localStorage.setItem('nexus_email', email);
-                    showMsg('Login successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = '/dashboard', 1000);
-                } else {
-                    showMsg(data.error || 'Invalid email or password', 'error');
-                }
-            } catch(e) {
-                showMsg('Connection error. Please try again.', 'error');
-            }
+<div class="inp"><label>Email</label><input type="email" id="email" placeholder="your@email.com" autofocus></div>
+<div class="inp"><label>Password</label><input type="password" id="password" placeholder="Enter password"></div>
+
+<div class="captcha-box" id="captchaBox" style="display:none">
+<p style="color:#888;font-size:11px;margin-bottom:6px">Verify you are human:</p>
+<span id="captchaText">ABC123</span>
+<input type="text" id="captchaInput" placeholder="Enter code above" maxlength="6">
+</div>
+
+<div class="msg error" id="error"></div>
+<div class="msg success" id="success"></div>
+
+<button class="btn btn-primary" onclick="login()">Sign In</button>
+
+<div class="divider">or continue with</div>
+
+<button class="btn btn-google" onclick="socialLogin('google')">Google</button>
+<button class="btn btn-github" onclick="socialLogin('github')">GitHub</button>
+<button class="btn btn-ms" onclick="socialLogin('microsoft')">Microsoft</button>
+
+<div class="links">
+<a href="/register">Create account</a> | <a href="/reset">Forgot password?</a>
+</div>
+</div>
+
+<script>
+let captchaAnswer = '';
+let loginAttempts = 0;
+
+function generateCaptcha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let result = '';
+    for(let i=0;i<6;i++) result += chars[Math.floor(Math.random()*chars.length)];
+    captchaAnswer = result;
+    document.getElementById('captchaText').textContent = result;
+    document.getElementById('captchaBox').style.display = 'block';
+}
+
+async function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    if (!email || !password) {
+        return showMsg('Please fill all fields', 'error');
+    }
+    
+    // Captcha after 2 failed attempts
+    if (loginAttempts >= 2) {
+        const captchaInput = document.getElementById('captchaInput').value.trim();
+        if (captchaInput.toUpperCase() !== captchaAnswer) {
+            generateCaptcha();
+            return showMsg('Wrong captcha code. Try again.', 'error');
         }
-        
-        function oauthLogin(provider) {
-            showMsg('OAuth login coming soon...', 'success');
-        }
-        
-        function showMsg(msg, type) {
-            const el = document.getElementById(type);
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 4000);
-        }
-        
-        document.getElementById('password').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') login();
+    }
+    
+    try {
+        const resp = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password})
         });
-    </script>
+        const data = await resp.json();
+        
+        if (data.token) {
+            localStorage.setItem('nexus_token', data.token);
+            localStorage.setItem('nexus_peer_id', data.peer_id);
+            localStorage.setItem('nexus_email', email);
+            showMsg('Login successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = '/dashboard', 1000);
+        } else {
+            loginAttempts++;
+            if (loginAttempts >= 2) generateCaptcha();
+            showMsg(data.error || 'Invalid credentials', 'error');
+        }
+    } catch(e) {
+        showMsg('Connection error. Please try again.', 'error');
+    }
+}
+
+function socialLogin(provider) {
+    // In production, redirect to OAuth provider
+    window.location.href = `/api/auth/oauth/${provider}`;
+}
+
+function showMsg(msg, type) {
+    const el = document.getElementById(type);
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+}
+
+document.getElementById('password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') login();
+});
+</script>
 </body>
 </html>

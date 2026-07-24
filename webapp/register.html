@@ -1,453 +1,155 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Nexus Remote</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
-            color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .card {
-            background: #151530;
-            border-radius: 24px;
-            padding: 48px;
-            width: 100%;
-            max-width: 440px;
-            border: 1px solid #2a2a4a;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
-        }
-        .logo { 
-            text-align: center; 
-            font-size: 32px; 
-            font-weight: 800; 
-            background: linear-gradient(135deg, #6366f1, #818cf8, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px; 
-        }
-        .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 36px; }
-        
-        .progress-steps {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 32px;
-        }
-        .step {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: 700;
-            background: #1a1a3e; color: #555;
-            transition: all 0.3s;
-        }
-        .step.active { background: #6366f1; color: #fff; }
-        .step.done { background: #22c55e; color: #fff; }
-        .step-line {
-            width: 40px; height: 2px;
-            background: #1a1a3e;
-            align-self: center;
-        }
-        .step-line.done { background: #22c55e; }
-        
-        .input-group { margin-bottom: 20px; }
-        .input-group label { 
-            display: block; 
-            margin-bottom: 8px; 
-            color: #888; 
-            font-size: 12px; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px;
-            font-weight: 600;
-        }
-        .input-group input {
-            width: 100%; 
-            padding: 14px 16px; 
-            border-radius: 12px;
-            border: 2px solid #2a2a4a; 
-            background: #0a0a1a; 
-            color: #fff; 
-            font-size: 15px;
-            transition: all 0.3s;
-        }
-        .input-group input:focus { 
-            outline: none; 
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-        }
-        .input-group input.error { border-color: #ef4444; }
-        .input-group .hint { 
-            color: #666; 
-            font-size: 11px; 
-            margin-top: 6px; 
-        }
-        .input-group .error-msg {
-            color: #ef4444;
-            font-size: 11px;
-            margin-top: 4px;
-            display: none;
-        }
-        
-        .password-strength {
-            height: 4px;
-            background: #1a1a3e;
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-        .password-strength-bar {
-            height: 100%;
-            border-radius: 2px;
-            transition: all 0.3s;
-            width: 0%;
-        }
-        .strength-weak { background: #ef4444; width: 25%; }
-        .strength-fair { background: #f59e0b; width: 50%; }
-        .strength-good { background: #6366f1; width: 75%; }
-        .strength-strong { background: #22c55e; width: 100%; }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 18px; height: 18px;
-            margin-top: 2px;
-            accent-color: #6366f1;
-        }
-        .checkbox-group label {
-            color: #888;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        .checkbox-group label a {
-            color: #6366f1;
-            text-decoration: none;
-        }
-        .checkbox-group label a:hover { text-decoration: underline; }
-        
-        .btn {
-            width: 100%; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 12px;
-            font-size: 16px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            transition: all 0.3s;
-            letter-spacing: 0.5px;
-        }
-        .btn-primary { 
-            background: linear-gradient(135deg, #6366f1, #5558e6); 
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(99,102,241,0.3);
-        }
-        .btn-primary:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(99,102,241,0.4);
-        }
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .divider { 
-            text-align: center; 
-            color: #555; 
-            margin: 24px 0;
-            font-size: 13px;
-        }
-        .divider::before, .divider::after { content: "  ——  "; }
-        
-        .social-buttons { display: flex; gap: 12px; }
-        .btn-social {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #2a2a4a;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            background: transparent;
-            color: #e0e0e0;
-        }
-        .btn-social:hover { border-color: #6366f1; background: rgba(99,102,241,0.1); }
-        
-        .links { 
-            text-align: center; 
-            margin-top: 24px; 
-            font-size: 14px;
-            color: #888;
-        }
-        .links a { color: #6366f1; text-decoration: none; font-weight: 600; }
-        .links a:hover { text-decoration: underline; }
-        
-        .msg { 
-            font-size: 13px; 
-            text-align: center; 
-            margin-top: 12px; 
-            display: none; 
-            padding: 12px; 
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        .msg.error { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
-        .msg.success { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
-        
-        .benefits {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .benefit-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #888;
-        }
-        .benefit-item .icon { font-size: 16px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#151530;border-radius:20px;padding:36px;width:420px;border:1px solid #2a2a4a;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.logo{text-align:center;font-size:26px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.sub{text-align:center;color:#888;font-size:12px;margin-bottom:20px}
+.steps{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
+.step{width:28px;height:28px;border-radius:50%;background:#1a1a3e;color:#555;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold}
+.step.active{background:#6366f1;color:#fff}.step.done{background:#22c55e;color:#fff}
+.inp{margin-bottom:12px}
+.inp label{display:block;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.inp input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px}
+.inp input:focus{outline:none;border-color:#6366f1}
+.strength{height:3px;background:#1a1a3e;border-radius:2px;margin-top:4px;overflow:hidden}
+.strength-bar{height:100%;border-radius:2px;transition:all 0.3s}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin:6px 0;color:#fff}
+.btn-primary{background:#6366f1}.btn-google{background:#4285f4}.btn-github{background:#333}.btn-ms{background:#0078d4}
+.msg{padding:8px;border-radius:6px;font-size:11px;text-align:center;margin:8px 0;display:none}
+.msg.error{background:rgba(239,68,68,0.1);color:#ef4444;display:block}
+.msg.success{background:rgba(34,197,94,0.1);color:#22c55e;display:block}
+.captcha-box{background:#0a0a1a;border:1px solid #2a2a4a;border-radius:8px;padding:10px;margin:10px 0;text-align:center}
+.captcha-box span{font-size:20px;font-weight:bold;color:#f59e0b;letter-spacing:3px}
+.captcha-box input{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #2a2a4a;background:#151530;color:#fff;text-align:center;font-size:14px}
+.divider{text-align:center;color:#555;margin:16px 0;font-size:12px}
+.links{text-align:center;margin-top:16px;font-size:12px}
+.links a{color:#6366f1;text-decoration:none}
+</style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo">⚡ Nexus Remote</div>
-        <p class="subtitle">Create your free account in 30 seconds</p>
-        
-        <!-- Progress Steps -->
-        <div class="progress-steps">
-            <div class="step active" id="step1">1</div>
-            <div class="step-line" id="line1"></div>
-            <div class="step" id="step2">2</div>
-            <div class="step-line" id="line2"></div>
-            <div class="step" id="step3">3</div>
-        </div>
-        
-        <!-- Benefits -->
-        <div class="benefits">
-            <div class="benefit-item"><span class="icon">✅</span> Free forever</div>
-            <div class="benefit-item"><span class="icon">🔐</span> E2E Encrypted</div>
-            <div class="benefit-item"><span class="icon">📱</span> All platforms</div>
-            <div class="benefit-item"><span class="icon">🎮</span> Game streaming</div>
-        </div>
-        
-        <!-- Step 1: Email -->
-        <div id="form-step1">
-            <div class="input-group">
-                <label>Email Address</label>
-                <input type="email" id="email" placeholder="your@email.com" autofocus>
-                <span class="hint">We'll send you a verification code</span>
-                <span class="error-msg" id="email-error">Please enter a valid email</span>
-            </div>
-            <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
-        </div>
-        
-        <!-- Step 2: Password -->
-        <div id="form-step2" style="display:none">
-            <div class="input-group">
-                <label>Create Password</label>
-                <input type="password" id="password" placeholder="Min 8 characters">
-                <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
-                <span class="hint" id="strengthText">Enter password</span>
-            </div>
-            <div class="input-group">
-                <label>Confirm Password</label>
-                <input type="password" id="confirm" placeholder="Repeat your password">
-                <span class="error-msg" id="confirm-error">Passwords do not match</span>
-            </div>
-            <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
-            <button class="btn btn-social" style="margin-top:8px;background:transparent;border:none;color:#888" onclick="prevStep(1)">← Back</button>
-        </div>
-        
-        <!-- Step 3: Agreement & Create -->
-        <div id="form-step3" style="display:none">
-            <div class="checkbox-group">
-                <input type="checkbox" id="agreeTerms">
-                <label for="agreeTerms">
-                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-                </label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="agreeNews" checked>
-                <label for="agreeNews">
-                    Send me product updates and tips (optional)
-                </label>
-            </div>
-            
-            <div class="msg error" id="error"></div>
-            <div class="msg success" id="success"></div>
-            
-            <button class="btn btn-primary" id="createBtn" onclick="register()">
-                🚀 Create Free Account
-            </button>
-            <button class="btn btn-social" style="margin-top:8px;background:transparent;border:none;color:#888" onclick="prevStep(2)">← Back</button>
-        </div>
-        
-        <div class="divider">or sign up with</div>
-        
-        <div class="social-buttons">
-            <button class="btn-social" onclick="oauthRegister('google')">🔵 Google</button>
-            <button class="btn-social" onclick="oauthRegister('github')">🐙 GitHub</button>
-            <button class="btn-social" onclick="oauthRegister('microsoft')">⊞ Microsoft</button>
-        </div>
-        
-        <div class="links">
-            Already have an account? <a href="/login">Sign in</a>
-        </div>
-    </div>
+<div class="card">
+<div class="logo">Nexus Remote</div>
+<div class="sub">Create your free account</div>
 
-    <script>
-        let currentStep = 1;
-        const totalSteps = 3;
-        
-        function updateSteps(step) {
-            currentStep = step;
-            
-            // Update progress dots
-            for (let i = 1; i <= totalSteps; i++) {
-                const dot = document.getElementById('step' + i);
-                const line = document.getElementById('line' + i);
-                dot.className = 'step';
-                if (line) line.className = 'step-line';
-                
-                if (i < step) {
-                    dot.classList.add('done');
-                    if (line) line.classList.add('done');
-                } else if (i === step) {
-                    dot.classList.add('active');
-                }
-            }
-            
-            // Show/hide forms
-            document.getElementById('form-step1').style.display = step === 1 ? 'block' : 'none';
-            document.getElementById('form-step2').style.display = step === 2 ? 'block' : 'none';
-            document.getElementById('form-step3').style.display = step === 3 ? 'block' : 'none';
-        }
-        
-        function nextStep(step) {
-            if (step === 2) {
-                const email = document.getElementById('email').value.trim();
-                if (!email || !email.includes('@')) {
-                    document.getElementById('email-error').style.display = 'block';
-                    document.getElementById('email').classList.add('error');
-                    return;
-                }
-                document.getElementById('email-error').style.display = 'none';
-                document.getElementById('email').classList.remove('error');
-            }
-            
-            if (step === 3) {
-                const password = document.getElementById('password').value.trim();
-                const confirm = document.getElementById('confirm').value.trim();
-                
-                if (password.length < 8) {
-                    showMsg('Password must be at least 8 characters', 'error');
-                    return;
-                }
-                if (password !== confirm) {
-                    document.getElementById('confirm-error').style.display = 'block';
-                    return;
-                }
-                document.getElementById('confirm-error').style.display = 'none';
-            }
-            
-            updateSteps(step);
-        }
-        
-        function prevStep(step) {
-            updateSteps(step);
-        }
-        
-        // Password strength
-        document.getElementById('password').addEventListener('input', function(e) {
-            const password = e.target.value;
-            const bar = document.getElementById('strengthBar');
-            const text = document.getElementById('strengthText');
-            
-            bar.className = 'password-strength-bar';
-            
-            if (password.length === 0) {
-                bar.style.width = '0%';
-                text.textContent = 'Enter password';
-            } else if (password.length < 6) {
-                bar.classList.add('strength-weak');
-                text.textContent = 'Weak - Too short';
-            } else if (password.length < 8) {
-                bar.classList.add('strength-fair');
-                text.textContent = 'Fair - Add more characters';
-            } else if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-                bar.classList.add('strength-good');
-                text.textContent = 'Good - Add numbers and uppercase';
-            } else {
-                bar.classList.add('strength-strong');
-                text.textContent = 'Strong password!';
-            }
+<div class="steps">
+<div class="step active" id="s1">1</div><div class="step" id="s2">2</div><div class="step" id="s3">3</div>
+</div>
+
+<div id="step1">
+<div class="inp"><label>Email Address</label><input type="email" id="email" placeholder="your@email.com"></div>
+<button class="btn btn-primary" onclick="nextStep()">Continue</button>
+</div>
+
+<div id="step2" style="display:none">
+<div class="inp"><label>Create Password</label><input type="password" id="password" placeholder="Min 8 characters" oninput="checkStrength()">
+<div class="strength"><div class="strength-bar" id="strengthBar" style="width:0%"></div></div>
+<small id="strengthText" style="color:#888">Enter password</small></div>
+<div class="inp"><label>Confirm Password</label><input type="password" id="confirm" placeholder="Repeat password"></div>
+<button class="btn btn-primary" onclick="nextStep()">Continue</button>
+<button class="btn" style="background:transparent;color:#888" onclick="prevStep()">Back</button>
+</div>
+
+<div id="step3" style="display:none">
+<div class="captcha-box">
+<p style="color:#888;font-size:11px;margin-bottom:6px">Verify you are human:</p>
+<span id="captchaText">---</span>
+<input type="text" id="captchaInput" placeholder="Enter code" maxlength="6">
+</div>
+<div class="msg error" id="error"></div>
+<div class="msg success" id="success"></div>
+<button class="btn btn-primary" onclick="register()">Create Account</button>
+<button class="btn" style="background:transparent;color:#888" onclick="prevStep()">Back</button>
+</div>
+
+<div class="divider">or sign up with</div>
+<button class="btn btn-google" onclick="socialReg('google')">Google</button>
+<button class="btn btn-github" onclick="socialReg('github')">GitHub</button>
+<button class="btn btn-ms" onclick="socialReg('microsoft')">Microsoft</button>
+
+<div class="links"><a href="/login">Already have an account? Sign in</a></div>
+</div>
+
+<script>
+let step = 1, captchaAnswer = '';
+
+function updateSteps(s) {
+    step = s;
+    document.getElementById('s1').className = s>1?'step done':'step active';
+    document.getElementById('s2').className = s>2?'step done':(s==2?'step active':'step');
+    document.getElementById('s3').className = s==3?'step active':'step';
+    document.getElementById('step1').style.display = s==1?'block':'none';
+    document.getElementById('step2').style.display = s==2?'block':'none';
+    document.getElementById('step3').style.display = s==3?'block':'none';
+}
+
+function nextStep() {
+    if (step==1) {
+        const email = document.getElementById('email').value.trim();
+        if (!email || !email.includes('@')) return showMsg('Enter valid email','error');
+    }
+    if (step==2) {
+        const pw = document.getElementById('password').value;
+        const cf = document.getElementById('confirm').value;
+        if (pw.length<8) return showMsg('Password must be 8+ characters','error');
+        if (pw!==cf) return showMsg('Passwords do not match','error');
+    }
+    if (step==3) {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        captchaAnswer = '';
+        for(let i=0;i<6;i++) captchaAnswer += chars[Math.floor(Math.random()*chars.length)];
+        document.getElementById('captchaText').textContent = captchaAnswer;
+    }
+    updateSteps(step+1);
+}
+
+function prevStep() { if(step>1) updateSteps(step-1); }
+
+function checkStrength() {
+    const pw = document.getElementById('password').value;
+    const bar = document.getElementById('strengthBar');
+    const txt = document.getElementById('strengthText');
+    let s=0; if(pw.length>=8)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+    const w = [0,25,50,75,100][s]; const c = ['#ef4444','#f59e0b','#6366f1','#22c55e'][s];
+    bar.style.width = w+'%'; bar.style.background = c;
+    txt.textContent = ['Too weak','Weak','Fair','Good','Strong'][s];
+}
+
+async function register() {
+    const captcha = document.getElementById('captchaInput').value.trim();
+    if (captcha.toUpperCase() !== captchaAnswer) {
+        return showMsg('Wrong captcha code','error');
+    }
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    try {
+        const resp = await fetch('/api/auth/register', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({email, password})
         });
-        
-        async function register() {
-            if (!document.getElementById('agreeTerms').checked) {
-                showMsg('Please agree to Terms of Service', 'error');
-                return;
-            }
-            
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            const btn = document.getElementById('createBtn');
-            btn.disabled = true;
-            btn.textContent = 'Creating account...';
-            
-            try {
-                const resp = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
-                });
-                const data = await resp.json();
-                
-                if (data.token) {
-                    showMsg('Account created! Redirecting to dashboard...', 'success');
-                    localStorage.setItem('nexus_token', data.token);
-                    localStorage.setItem('nexus_peer_id', data.peer_id);
-                    localStorage.setItem('nexus_email', email);
-                    setTimeout(() => window.location.href = '/dashboard', 1500);
-                } else {
-                    showMsg(data.error || 'Registration failed', 'error');
-                    btn.disabled = false;
-                    btn.textContent = '🚀 Create Free Account';
-                }
-            } catch(e) {
-                showMsg('Connection error', 'error');
-                btn.disabled = false;
-                btn.textContent = '🚀 Create Free Account';
-            }
+        const data = await resp.json();
+        if (data.token) {
+            showMsg('Account created! Redirecting...','success');
+            setTimeout(() => window.location.href='/dashboard', 1500);
+        } else {
+            showMsg(data.error || 'Registration failed','error');
         }
-        
-        function oauthRegister(provider) {
-            showMsg('Sign up with ' + provider + ' coming soon...', 'success');
-        }
-        
-        function showMsg(msg, type) {
-            const el = document.getElementById(type);
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-    </script>
+    } catch(e) { showMsg('Connection error','error'); }
+}
+
+function socialReg(p) { window.location.href = '/api/auth/oauth/'+p; }
+function showMsg(m,t) {
+    const el = document.getElementById(t);
+    el.textContent = m; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+}
+</script>
 </body>
 </html>

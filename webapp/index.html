@@ -7,32 +7,31 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0}
-nav{background:#0d0d24;border-bottom:1px solid #1a1a3e;padding:16px 0;position:sticky;top:0;z-index:100}
-.nav-container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:22px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
-.nav-links{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.nav-links a{color:#888;text-decoration:none;font-size:13px;transition:color 0.3s}
+nav{background:#0d0d24;border-bottom:1px solid #1a1a3e;padding:12px 0;position:sticky;top:0;z-index:100}
+.nav-container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.logo{font-size:20px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+.nav-links{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.nav-links a{color:#888;text-decoration:none;font-size:12px;transition:color 0.3s}
 .nav-links a:hover{color:#fff}
-.nav-links .btn-nav{padding:8px 16px;border-radius:8px;font-weight:600;font-size:12px}
+.btn-nav{padding:6px 14px;border-radius:6px;font-weight:600;font-size:11px;text-decoration:none}
 .btn-login{background:transparent;border:1px solid #6366f1;color:#6366f1}
-.btn-login:hover{background:#6366f1;color:#fff}
 .btn-signup{background:#6366f1;color:#fff}
-.btn-signup:hover{background:#5558e6}
-.hero{text-align:center;padding:80px 20px 60px;background:radial-gradient(ellipse at center,#1a1a3e 0%,#0a0a1a 70%)}
-.hero h1{font-size:48px;font-weight:800;background:linear-gradient(135deg,#6366f1,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
-.hero p{font-size:18px;color:#888;max-width:600px;margin:0 auto 32px}
-.btn-hero{padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;text-decoration:none;margin:8px;display:inline-block}
-.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#5558e6}
-.btn-secondary{background:transparent;border:2px solid #6366f1;color:#6366f1}
-.features{max-width:1200px;margin:0 auto;padding:60px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px}
-.fcard{background:#151530;border:1px solid #2a2a4a;border-radius:16px;padding:24px;transition:all 0.3s}
-.fcard:hover{transform:translateY(-4px);border-color:#6366f1}
-.fcard h3{font-size:18px;margin-bottom:8px;color:#fff}
-.fcard p{color:#888;font-size:13px}
-.icon{font-size:36px;margin-bottom:12px}
-footer{background:#0d0d24;border-top:1px solid #1a1a3e;padding:32px;text-align:center;color:#666;font-size:13px}
+.hero{text-align:center;padding:60px 20px 40px;background:radial-gradient(ellipse at center,#1a1a3e 0%,#0a0a1a 70%)}
+.hero h1{font-size:40px;font-weight:800;background:linear-gradient(135deg,#6366f1,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.hero p{font-size:16px;color:#888;max-width:550px;margin:0 auto 24px}
+.btn-hero{padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;margin:6px;display:inline-block}
+.btn-primary{background:#6366f1;color:#fff}.btn-secondary{background:transparent;border:2px solid #6366f1;color:#6366f1}
+.container{max-width:1000px;margin:0 auto;padding:30px 20px}
+h2{font-size:24px;color:#fff;margin-bottom:20px;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.card{background:#151530;border:1px solid #2a2a4a;border-radius:12px;padding:20px;text-align:center;transition:all 0.3s;cursor:pointer;text-decoration:none;color:#e0e0e0}
+.card:hover{transform:translateY(-3px);border-color:#6366f1}
+.card .icon{font-size:32px;margin-bottom:8px}
+.card h3{font-size:15px;margin-bottom:4px}
+.card p{color:#888;font-size:11px}
+footer{background:#0d0d24;border-top:1px solid #1a1a3e;padding:24px;text-align:center;color:#666;font-size:12px}
 footer a{color:#6366f1;text-decoration:none}
-@media(max-width:768px){.hero h1{font-size:32px}.nav-links{display:none}}
+.alert{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13px;color:#a78bfa}
 </style>
 </head>
 <body>
@@ -40,7 +39,6 @@ footer a{color:#6366f1;text-decoration:none}
 <div class="nav-container">
 <a href="/" class="logo">Nexus Remote</a>
 <div class="nav-links">
-<a href="/">Home</a>
 <a href="/download">Download</a>
 <a href="/viewer">Web Viewer</a>
 <a href="/gamepad">Gamepad</a>
@@ -57,24 +55,48 @@ footer a{color:#6366f1;text-decoration:none}
 </nav>
 
 <section class="hero">
-<h1>Remote Desktop<br>Reimagined</h1>
-<p>Access any device from anywhere. Secure, fast, and encrypted. Windows, Mac, Linux, Android, iOS, Consoles.</p>
+<h1>Remote Desktop Reimagined</h1>
+<p>Access any device from anywhere. Secure, encrypted, fast. Windows, Mac, Linux, Android, iOS, Consoles.</p>
 <a href="/register" class="btn-hero btn-primary">Get Started Free</a>
-<a href="/download" class="btn-hero btn-secondary">Download</a>
+<a href="/download" class="btn-hero btn-secondary">Download App</a>
 </section>
 
-<div class="features">
-<div class="fcard"><div class="icon">🔐</div><h3>E2E Encrypted</h3><p>AES-256-GCM encryption with Diffie-Hellman key exchange.</p></div>
-<div class="fcard"><div class="icon">📺</div><h3>4K Streaming</h3><p>Stream at 4K 60fps with hardware encoding.</p></div>
-<div class="fcard"><div class="icon">🎮</div><h3>Game Streaming</h3><p>Virtual gamepad with customizable layout.</p></div>
-<div class="fcard"><div class="icon">📁</div><h3>File Transfer</h3><p>Drag & drop files between any devices.</p></div>
-<div class="fcard"><div class="icon">⚡</div><h3>Wake-on-LAN</h3><p>Turn on your PC from anywhere in the world.</p></div>
-<div class="fcard"><div class="icon">🛡</div><h3>2FA Security</h3><p>Two-factor auth with Google Authenticator.</p></div>
+<div class="container">
+<h2>Everything You Need</h2>
+<div class="cards">
+<a href="/register" class="card"><div class="icon">🔐</div><h3>Register</h3><p>Create your free account with email or Google/GitHub</p></a>
+<a href="/login" class="card"><div class="icon">🔑</div><h3>Sign In</h3><p>Login to access your devices and start streaming</p></a>
+<a href="/reset" class="card"><div class="icon">🔄</div><h3>Reset Password</h3><p>Forgot your password? Reset it here</p></a>
+<a href="/dashboard" class="card"><div class="icon">📊</div><h3>Dashboard</h3><p>View your devices, stats, and manage settings</p></a>
+<a href="/download" class="card"><div class="icon">📥</div><h3>Download</h3><p>Get the app for Windows, Mac, Linux, Android, iOS</p></a>
+<a href="/viewer" class="card"><div class="icon">🖥</div><h3>Web Viewer</h3><p>View remote screen directly in browser</p></a>
+<a href="/gamepad" class="card"><div class="icon">🎮</div><h3>Gamepad</h3><p>Customizable mobile gamepad overlay</p></a>
+<a href="/speedtest" class="card"><div class="icon">⚡</div><h3>Speed Test</h3><p>Check your connection quality for streaming</p></a>
+<a href="/support" class="card"><div class="icon">🔗</div><h3>Remote Support</h3><p>Generate one-time links to share your screen</p></a>
+<a href="/docs" class="card"><div class="icon">📚</div><h3>Documentation</h3><p>Learn how to use all features</p></a>
+<a href="/blog" class="card"><div class="icon">📝</div><h3>Blog</h3><p>Latest updates, changelog, and news</p></a>
+<a href="/forum" class="card"><div class="icon">💬</div><h3>Community</h3><p>Get help and share tips with other users</p></a>
+</div>
+
+<div class="alert">
+<strong>Quick Start Guide:</strong><br>
+1. <a href="/register" style="color:#818cf8">Register</a> your account<br>
+2. <a href="/download" style="color:#818cf8">Download</a> the app for your device<br>
+3. Add your PC in the app using the secret code<br>
+4. Click <strong>Wake</strong> to turn on your PC remotely<br>
+5. Click <strong>Connect</strong> to start streaming your screen<br>
+6. Open <a href="/gamepad" style="color:#818cf8">Gamepad</a> on your phone to control games<br>
+<br>
+<strong>Need help?</strong> Visit our <a href="/docs" style="color:#818cf8">Documentation</a> or <a href="/forum" style="color:#818cf8">Community Forum</a>
+</div>
 </div>
 
 <footer>
-<p> 2026 Nexus Remote. <a href="/login">Sign In</a> | <a href="/register">Register</a> | <a href="/reset">Reset Password</a> | <a href="/docs">Documentation</a></p>
-<p style="margin-top:8px">End-to-end encrypted | Open source | Free forever</p>
+<p> 2026 Nexus Remote. All features are free and open source.</p>
+<p style="margin-top:6px">
+<a href="/login">Sign In</a> | <a href="/register">Register</a> | <a href="/reset">Reset Password</a> | 
+<a href="/docs">Docs</a> | <a href="/support">Support</a> | <a href="/status">Status</a>
+</p>
 </footer>
 </body>
 </html>
