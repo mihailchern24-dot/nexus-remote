@@ -109,6 +109,8 @@ class H(BaseHTTPRequestHandler):
         if self.path == "/send_frame": return self._json({"status":"sent"})
         if self.path == "/get_frame": return self._json({"type":"video","data":"FRAME"})
         if self.path == "/stop_stream": return self._json({"status":"stopped"})
+        if self.path == "/send_chat": self._json({"status":"sent"}); return
+        if self.path == "/get_chat": self._json({"messages":[]}); return
         if self.path == "/wol": return self._json({"status":"wol_sent","success":True})
         
         self._json({"error":"Not found"}, 404)
@@ -119,4 +121,5 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT",10000))
     print(f"Nexus Remote v4.0 on port {port}")
     HTTPServer(("0.0.0.0",port),H).serve_forever()
+
 
