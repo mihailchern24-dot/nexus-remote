@@ -1,0 +1,91 @@
+Nexus Remote Test Report
+Date: 2026-07-24 12:19:05.901771
+Passed: 68/87 (78.2%)
+
+  PASS  Server Health Check
+  FAIL  Server Status API
+  FAIL  Device Registration - 'status'
+  FAIL  Android Registration - 'status'
+  FAIL  Get Peers List
+  PASS  Auth Register
+  FAIL  Auth Login
+  PASS  QR Code Feature
+  FAIL  Start Stream
+  FAIL  Send Video Frame
+  FAIL  Send Audio Frame
+  FAIL  Receive Frame
+  FAIL  Stop Stream
+  PASS  Multi-Monitor Module
+  PASS  Session Recording
+  PASS  Chat Feature
+  PASS  Fullscreen Viewer
+  PASS  Zoom/Scale Feature
+  PASS  Ctrl+Alt+Del Send
+  PASS  View Only Mode
+  PASS  File Drop Page
+  PASS  Shared Clipboard Module
+  PASS  Cloud Drive Icons (UI)
+  PASS  File Manager UI
+  PASS  Drag & Drop Support
+  PASS  Shared Folder Feature
+  PASS  Google Drive Integration
+  PASS  OneDrive Integration
+  PASS  Dropbox Integration
+  PASS  E2E Encryption
+  PASS  Compression (9 methods)
+  PASS  Encryption (5+ methods)
+  PASS  IP Blacklist Feature
+  PASS  Audit Logging
+  PASS  Virtual Gamepad
+  PASS  Gamepad Customization
+  PASS  Auto-hide Gamepad
+  PASS  Twitch/YouTube Streaming
+  PASS  Game Mode (Low Latency)
+  PASS  Auto Codec Selection
+  PASS  Manual Codec Selection
+  PASS  Adaptive Bitrate
+  PASS  Hardware Acceleration
+  PASS  P2P WebRTC Page
+  PASS  Cloud Relay Server
+  FAIL  WOL Endpoint
+  PASS  Sleep Command
+  PASS  Battery Status
+  PASS  Dark Theme
+  PASS  Hotkeys Feature
+  PASS  Notifications Feature
+  PASS  Remote Support Page
+  PASS  Speed Test Page
+  PASS  Screen Share Link
+  PASS  REST API Status
+  PASS  Plugin System (Python)
+  FAIL  Compression zlib
+  FAIL  Compression lzma
+  FAIL  Compression bz2
+  FAIL  Compression gzip
+  FAIL  Compression lz4
+  FAIL  Compression zstd
+  FAIL  Compression snappy
+  FAIL  Compression brotli
+  PASS  Encryption aes_gcm
+  PASS  Encryption aes_cbc
+  PASS  Encryption chacha20
+  PASS  Encryption aes_ctr
+  PASS  Encryption xor
+  PASS  Page /index
+  PASS  Page /login
+  PASS  Page /register
+  PASS  Page /dashboard
+  PASS  Page /reset
+  PASS  Page /download
+  PASS  Page /viewer
+  PASS  Page /speedtest
+  PASS  Page /status
+  PASS  Page /docs
+  PASS  Page /blog
+  PASS  Page /support
+  PASS  Page /forum
+  PASS  Page /remote
+  PASS  Page /files
+  PASS  Page /wake_stream
+  PASS  Page /gamepad
+  PASS  Page /p2p
