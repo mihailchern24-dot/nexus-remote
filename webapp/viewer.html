@@ -3,93 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web Viewer - Nexus Remote</title>
+<title>Web Viewer + Chat - Nexus Remote</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:#000;color:#fff;overflow:hidden}
-#toolbar{position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.8);padding:8px 16px;display:flex;gap:10px;align-items:center;z-index:100}
-#toolbar input{padding:8px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#fff;flex:1;max-width:300px}
+body{font-family:'Segoe UI',sans-serif;background:#000;color:#fff;overflow:hidden;display:flex}
+#main{flex:1;display:flex;flex-direction:column}
+#toolbar{background:rgba(0,0,0,0.8);padding:8px 16px;display:flex;gap:10px;align-items:center;z-index:100}
+#toolbar input{padding:8px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#fff;flex:1;max-width:250px}
 #toolbar button{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#fff}
-.btn-connect{background:#22c55e}.btn-stop{background:#ef4444}.btn-full{background:#6366f1}
-#screen{width:100%;height:calc(100vh - 50px);margin-top:50px;display:flex;align-items:center;justify-content:center}
+.btn-connect{background:#22c55e}.btn-stop{background:#ef4444}.btn-chat{background:#6366f1}
+#screen{flex:1;display:flex;align-items:center;justify-content:center}
 #screen img{max-width:100%;max-height:100%;object-fit:contain}
-#screen .no-signal{text-align:center;color:#666}
-#screen .no-signal .icon{font-size:80px;margin-bottom:16px}
-#status{position:fixed;bottom:16px;right:16px;background:rgba(0,0,0,0.8);padding:8px 12px;border-radius:8px;font-size:11px;color:#888}
-#status span{color:#22c55e}
-#nav-links{position:fixed;bottom:16px;left:16px;display:flex;gap:8px}
-#nav-links a{color:#888;text-decoration:none;font-size:11px;background:rgba(0,0,0,0.8);padding:6px 10px;border-radius:6px}
+#chat{width:300px;background:#0d0d24;border-left:1px solid #1a1a3e;display:flex;flex-direction:column}
+#chat.hidden{display:none}
+#chat-header{background:#151530;padding:12px;font-weight:bold;color:#6366f1;display:flex;justify-content:space-between}
+#chat-messages{flex:1;overflow-y:auto;padding:12px}
+#chat-messages .msg{margin-bottom:8px;padding:8px 12px;border-radius:8px;font-size:12px;max-width:80%}
+#chat-messages .msg.me{background:#6366f1;margin-left:auto;color:#fff}
+#chat-messages .msg.other{background:#1a1a3e;color:#e0e0e0}
+#chat-messages .msg .time{font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px}
+#chat-input{display:flex;padding:8px;gap:8px;background:#151530}
+#chat-input input{flex:1;padding:8px;border-radius:6px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:12px}
+#chat-input button{padding:8px 16px;border-radius:6px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:12px}
+.no-signal{text-align:center;color:#666}
+.no-signal .icon{font-size:80px;margin-bottom:16px}
+#status{position:fixed;bottom:8px;left:8px;background:rgba(0,0,0,0.8);padding:6px 10px;border-radius:6px;font-size:10px;color:#888}
 </style>
 </head>
 <body>
+<div id="main">
 <div id="toolbar">
-<span style="font-weight:bold;color:#6366f1">Nexus Web Viewer</span>
-<input type="text" id="peerInput" placeholder="Enter Peer ID...">
+<span style="font-weight:bold;color:#6366f1">Nexus Viewer</span>
+<input type="text" id="peerInput" placeholder="Peer ID (demo-viewer)">
 <button class="btn-connect" onclick="connect()">Connect</button>
-<button class="btn-stop" onclick="disconnect()">Disconnect</button>
-<button class="btn-full" onclick="document.documentElement.requestFullscreen()">Fullscreen</button>
+<button class="btn-stop" onclick="disconnect()">Stop</button>
+<button class="btn-chat" onclick="toggleChat()">💬 Chat</button>
+<button onclick="document.documentElement.requestFullscreen()" style="background:#888">⛶</button>
 </div>
 
 <div id="screen">
 <div class="no-signal" id="noSignal">
 <div class="icon">🖥</div>
-<h2>No Device Connected</h2>
-<p style="color:#666;margin-top:8px">Enter a Peer ID and click Connect</p>
-<p style="color:#444;margin-top:8px;font-size:12px">Demo: Use <b style="color:#6366f1">demo-viewer</b> for test stream</p>
+<h2>Not Connected</h2>
+<p style="color:#666;margin-top:8px">Click Connect to start viewing</p>
 </div>
 <img id="streamImg" style="display:none">
 </div>
-
-<div id="status">
-FPS: <span id="fpsVal">0</span> | Frames: <span id="frameVal">0</span>
+<div id="status">FPS: <span id="fps">0</span></div>
 </div>
 
-<div id="nav-links">
-<a href="/">Home</a>
-<a href="/gamepad">Gamepad</a>
-<a href="/dashboard">Dashboard</a>
+<div id="chat" class="hidden">
+<div id="chat-header">
+<span>💬 Chat</span>
+<button onclick="toggleChat()" style="background:none;border:none;color:#888;cursor:pointer;font-size:16px">✕</button>
+</div>
+<div id="chat-messages">
+<div class="msg other"><b>System:</b> Chat ready. Connect to start messaging.<div class="time">--:--</div></div>
+</div>
+<div id="chat-input">
+<input type="text" id="msgInput" placeholder="Type message..." onkeydown="if(event.key==='Enter')sendMsg()">
+<button onclick="sendMsg()">Send</button>
+</div>
 </div>
 
 <script>
-let connected = false, interval = null, frames = 0, startTime = Date.now();
+let connected=false,interval=null,frames=0,start=Date.now();
 
-async function connect() {
-    const peer = document.getElementById('peerInput').value.trim() || 'demo-viewer';
-    try {
-        await fetch('/start_stream', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:peer,target:'web-viewer',quality:'high'})});
-        connected = true;
-        document.getElementById('noSignal').style.display = 'none';
-        document.getElementById('streamImg').style.display = 'block';
-        startReceiving();
-    } catch(e) { alert('Connection failed'); }
+function toggleChat(){document.getElementById('chat').classList.toggle('hidden')}
+
+async function connect(){
+const peer=document.getElementById('peerInput').value.trim()||'demo-viewer';
+try{
+await fetch('/start_stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:peer,target:'web-viewer',quality:'high'})});
+connected=true;
+document.getElementById('noSignal').style.display='none';
+document.getElementById('streamImg').style.display='block';
+startReceiving();
+}catch(e){alert('Connection failed. Is the device online?')}
 }
 
-function startReceiving() {
-    interval = setInterval(async () => {
-        if (!connected) return;
-        try {
-            const resp = await fetch('/get_frame', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({peer_id:'web-viewer'})});
-            const data = await resp.json();
-            if (data.type === 'video' && data.data) {
-                document.getElementById('streamImg').src = 'data:image/jpeg;base64,' + data.data;
-                frames++;
-                document.getElementById('frameVal').textContent = frames;
-                document.getElementById('fpsVal').textContent = Math.round(frames / ((Date.now()-startTime)/1000));
-            }
-        } catch(e) {}
-    }, 1000/30);
+function startReceiving(){
+interval=setInterval(async()=>{
+if(!connected)return;
+try{
+const r=await fetch('/get_frame',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({peer_id:'web-viewer'})});
+const d=await r.json();
+if(d.type==='video'&&d.data){
+document.getElementById('streamImg').src='data:image/jpeg;base64,'+d.data;
+frames++;document.getElementById('fps').textContent=Math.round(frames/((Date.now()-start)/1000));
+}else if(d.type==='chat'){
+addMsg(d.from||'Remote',d.text,false);
+}
+}catch(e){}
+},1000/30);
+
+// Poll chat
+setInterval(async()=>{
+if(!connected)return;
+try{
+const r=await fetch('/get_chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({peer_id:'web-viewer'})});
+const d=await r.json();
+if(d.messages) d.messages.forEach(m=>addMsg(m.from,m.text,false));
+}catch(e){}
+},2000);
 }
 
-function disconnect() {
-    connected = false;
-    clearInterval(interval);
-    document.getElementById('noSignal').style.display = 'block';
-    document.getElementById('streamImg').style.display = 'none';
-    fetch('/stop_stream', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stream_id:'x'})});
+function sendMsg(){
+const input=document.getElementById('msgInput');
+const text=input.value.trim();
+if(!text||!connected)return;
+input.value='';
+addMsg('You',text,true);
+fetch('/send_chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:'web-viewer',target:document.getElementById('peerInput').value.trim(),text:text})});
 }
 
-// Auto-connect for demo
-document.getElementById('peerInput').value = 'demo-viewer';
+function addMsg(from,text,isMe){
+const div=document.createElement('div');
+div.className='msg '+(isMe?'me':'other');
+div.innerHTML='<b>'+from+':</b> '+text+'<div class="time">'+new Date().toLocaleTimeString()+'</div>';
+document.getElementById('chat-messages').appendChild(div);
+div.scrollIntoView({behavior:'smooth'});
+}
+
+function disconnect(){connected=false;clearInterval(interval);}
 </script>
 </body>
 </html>
