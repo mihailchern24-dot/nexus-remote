@@ -3,11 +3,11 @@ import json, os, time, hashlib, secrets, sqlite3
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 
-DB = "/app/nexus_auth.db" if os.path.exists("/app") else "nexus_auth.db"
+DB_PATH = "/app/nexus_auth.db" if os.path.exists("/app") else "nexus_auth.db" if os.path.exists("/app") else "nexus_auth.db"
 
-class DB:
+class AuthDB:
     def __init__(self):
-        self.c = sqlite3.connect(DB, check_same_thread=False)
+        self.c = sqlite3.connect(DB_PATH, check_same_thread=False)
         self.c.executescript("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,email TEXT UNIQUE,pass TEXT,token TEXT,peer TEXT,created TEXT)")
         self.c.commit()
     def reg(self,e,p):
@@ -26,7 +26,7 @@ class DB:
         self.c.execute("UPDATE users SET pass=? WHERE email=?",(ph,e)); self.c.commit()
         return self.c.rowcount>0
 
-db=DB()
+db=AuthDB()
 peers={}
 streams={}
 messages={}
@@ -82,3 +82,4 @@ if __name__=="__main__":
     p=int(os.environ.get("PORT",10000))
     print(f"Nexus Remote v4.0 on port {p}")
     HTTPServer(("0.0.0.0",p),H).serve_forever()
+
