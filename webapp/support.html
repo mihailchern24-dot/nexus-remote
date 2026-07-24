@@ -1,103 +1,72 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Support - Nexus Remote</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: #151530; border-radius: 24px; padding: 48px; width: 100%; max-width: 520px; border: 1px solid #2a2a4a; text-align: center; }
-        h1 { font-size: 28px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-        p { color: #888; margin-bottom: 32px; }
-        
-        .link-box {
-            background: #0a0a1a; border: 2px dashed #2a2a4a; border-radius: 12px;
-            padding: 20px; margin-bottom: 24px; word-break: break-all;
-        }
-        .link-box .url { color: #6366f1; font-family: 'Consolas', monospace; font-size: 16px; }
-        .link-box .expires { color: #f59e0b; font-size: 12px; margin-top: 8px; }
-        
-        .btn { padding: 14px 32px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin: 6px; }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-primary:hover { background: #5558e6; }
-        .btn-secondary { background: transparent; border: 2px solid #6366f1; color: #6366f1; }
-        
-        .input-group { margin-bottom: 16px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 6px; color: #888; font-size: 12px; }
-        .input-group input, .input-group select {
-            width: 100%; padding: 12px; border-radius: 10px;
-            border: 1px solid #2a2a4a; background: #0a0a1a; color: #fff; font-size: 14px;
-        }
-        
-        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
-        .feature { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remote Support - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#151530;border-radius:20px;padding:40px;width:480px;text-align:center;border:1px solid #2a2a4a}
+h1{font-size:28px;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+p{color:#888;font-size:13px;margin-bottom:20px}
+input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px;margin:6px 0}
+.btn{padding:14px 28px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;color:#fff;margin:6px}
+.btn-primary{background:#6366f1;width:100%}.btn-copy{background:#22c55e}
+.link-box{background:#0a0a1a;border:2px dashed #22c55e;border-radius:10px;padding:16px;margin:16px 0;word-break:break-all;font-family:monospace;color:#22c55e;font-size:14px;display:none}
+.expires{color:#f59e0b;font-size:11px;display:none}
+.msg{background:rgba(34,197,94,0.1);color:#22c55e;padding:10px;border-radius:8px;margin-top:10px;display:none;font-size:12px}
+</style>
 </head>
 <body>
-    <div class="card">
-        <h1>🔗 Remote Support</h1>
-        <p>Generate a one-time link to share your screen securely</p>
-        
-        <div class="input-group">
-            <label>Session Name</label>
-            <input type="text" id="sessionName" placeholder="e.g., Help with setup" value="Remote Support Session">
-        </div>
-        <div class="input-group">
-            <label>Expires In</label>
-            <select id="expiry">
-                <option value="15">15 minutes</option>
-                <option value="30" selected>30 minutes</option>
-                <option value="60">1 hour</option>
-                <option value="240">4 hours</option>
-                <option value="1440">24 hours</option>
-            </select>
-        </div>
-        
-        <div class="link-box" id="linkBox" style="display:none">
-            <div class="url" id="sessionUrl"></div>
-            <div class="expires">⏰ Expires in <span id="expiryTime"></span> minutes</div>
-        </div>
-        
-        <div>
-            <button class="btn btn-primary" onclick="generateLink()">🔗 Generate Link</button>
-            <button class="btn btn-secondary" onclick="copyLink()" id="copyBtn" style="display:none">📋 Copy Link</button>
-        </div>
-        
-        <div class="features">
-            <div class="feature">🔒 End-to-end encrypted</div>
-            <div class="feature">⏰ One-time use</div>
-            <div class="feature">👁 View only mode</div>
-            <div class="feature">❌ Revocable anytime</div>
-        </div>
-    </div>
+<div class="card">
+<h1>Remote Support</h1>
+<p>Generate a one-time link to share your screen securely</p>
 
-    <script>
-        function generateLink() {
-            const name = document.getElementById('sessionName').value || 'Support';
-            const expiry = document.getElementById('expiry').value;
-            const sessionId = 'nexus-' + Math.random().toString(36).substring(2, 10);
-            const url = https://nexus-remote.onrender.com/support/;
-            
-            document.getElementById('sessionUrl').textContent = url;
-            document.getElementById('expiryTime').textContent = expiry;
-            document.getElementById('linkBox').style.display = 'block';
-            document.getElementById('copyBtn').style.display = 'inline-block';
-            
-            // Store session
-            fetch('/api/support/create', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({session_id: sessionId, name, expiry: parseInt(expiry)})
-            });
-        }
-        
-        function copyLink() {
-            const url = document.getElementById('sessionUrl').textContent;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied! Share it with the person you want to help.');
-            });
-        }
-    </script>
+<label style="color:#888;font-size:11px;text-align:left;display:block">Session Name</label>
+<input type="text" id="name" placeholder="Help with setup" value="Remote Support">
+
+<label style="color:#888;font-size:11px;text-align:left;display:block;margin-top:8px">Expires In</label>
+<select id="expiry">
+<option value="15">15 minutes</option>
+<option value="30" selected>30 minutes</option>
+<option value="60">1 hour</option>
+<option value="240">4 hours</option>
+<option value="1440">24 hours</option>
+</select>
+
+<div class="link-box" id="linkBox"></div>
+<p class="expires" id="expiresText"></p>
+
+<button class="btn btn-primary" onclick="generate()">Generate Link</button>
+<button class="btn btn-copy" id="copyBtn" onclick="copyLink()" style="display:none">Copy Link</button>
+<div class="msg" id="msg"></div>
+
+<p style="color:#666;font-size:10px;margin-top:16px">End-to-end encrypted | One-time use | Revocable anytime</p>
+</div>
+
+<script>
+function generate(){
+const name=document.getElementById('name').value||'Support';
+const expiry=parseInt(document.getElementById('expiry').value);
+const id='nx-'+Math.random().toString(36).substr(2,8);
+const link='https://nexus-remote.onrender.com/support/'+id;
+
+document.getElementById('linkBox').textContent=link;
+document.getElementById('linkBox').style.display='block';
+document.getElementById('expiresText').textContent='Expires in '+expiry+' minutes';
+document.getElementById('expiresText').style.display='block';
+document.getElementById('copyBtn').style.display='inline-block';
+document.getElementById('msg').textContent='Link generated! Share it with the person you want to help.';
+document.getElementById('msg').style.display='block';
+
+fetch('/api/support/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,name,expiry})});
+}
+
+function copyLink(){
+const link=document.getElementById('linkBox').textContent;
+navigator.clipboard.writeText(link).then(()=>alert('Link copied!'));
+}
+</script>
 </body>
 </html>

@@ -1,155 +1,88 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Docs - Nexus Remote</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; display: flex; }
-        .sidebar { width: 260px; background: #0d0d24; border-right: 1px solid #1a1a3e; padding: 24px; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
-        .sidebar h3 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .sidebar a { display: block; color: #888; text-decoration: none; font-size: 13px; padding: 6px 0; }
-        .sidebar a:hover { color: #fff; }
-        .main { flex: 1; padding: 40px; max-width: 800px; }
-        h1 { font-size: 36px; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 24px; }
-        h2 { font-size: 24px; margin-top: 40px; margin-bottom: 16px; color: #fff; border-bottom: 1px solid #2a2a4a; padding-bottom: 8px; }
-        .endpoint { background: #151530; border: 1px solid #2a2a4a; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
-        .endpoint-header { padding: 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #2a2a4a; }
-        .method { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-        .method.get { background: #22c55e; color: #fff; }
-        .method.post { background: #6366f1; color: #fff; }
-        .endpoint-url { font-family: 'Consolas', monospace; font-size: 14px; }
-        .endpoint-body { padding: 16px; }
-        .endpoint-body p { color: #888; font-size: 13px; margin-bottom: 8px; }
-        pre { background: #0a0a1a; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; color: #22c55e; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;line-height:1.6}
+nav{background:#0d0d24;border-bottom:1px solid #1a1a3e;padding:12px 20px}
+.nav-container{max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:18px;font-weight:bold;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+.nav-links a{color:#888;text-decoration:none;font-size:12px;margin-left:12px}
+.container{max-width:900px;margin:0 auto;padding:30px 20px}
+h1{font-size:32px;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px}
+h2{font-size:20px;color:#6366f1;margin:24px 0 12px;border-bottom:1px solid #1a1a3e;padding-bottom:8px}
+h3{font-size:16px;color:#818cf8;margin:16px 0 8px}
+.card{background:#151530;border:1px solid #2a2a4a;border-radius:12px;padding:20px;margin:12px 0}
+.step{background:#1a1a3e;border-radius:8px;padding:12px 16px;margin:8px 0;display:flex;gap:12px;align-items:center}
+.step .num{background:#6366f1;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex-shrink:0}
+.step .text{font-size:13px}
+code{background:#0a0a1a;padding:2px 6px;border-radius:4px;color:#22c55e;font-size:12px}
+a{color:#6366f1}
+</style>
 </head>
 <body>
-    <div class="sidebar">
-        <h3>📚 API Reference</h3>
-        <a href="#auth">Authentication</a>
-        <a href="#register">Register</a>
-        <a href="#peers">Peers</a>
-        <a href="#stream">Streaming</a>
-        <a href="#frames">Frames</a>
-        <a href="#wol">Wake-on-LAN</a>
-    </div>
-    
-    <div class="main">
-        <h1>📚 Nexus Remote API</h1>
-        <p style="color:#888;margin-bottom:32px">Base URL: <code style="color:#6366f1">https://nexus-remote.onrender.com</code></p>
-        
-        <h2 id="auth">🔐 Authentication</h2>
-        
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/api/auth/register</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Create a new account</p>
-                <pre>{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}</pre>
-            </div>
-        </div>
-        
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/api/auth/login</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Sign in to your account</p>
-                <pre>{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
-→ {"token": "abc...", "peer_id": "nexus-abc123"}</pre>
-            </div>
-        </div>
-        
-        <h2 id="register">📝 Register Device</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/register</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Register a device on the network</p>
-                <pre>{
-  "peer_id": "my-device-001",
-  "platform": "windows",
-  "compression": "zstd",
-  "encryption": "aes_gcm"
-}</pre>
-            </div>
-        </div>
-        
-        <h2 id="peers">👥 Peers</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method get">GET</span>
-                <span class="endpoint-url">/peers</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Get list of online peers</p>
-                <pre>→ {"peers": ["device1", "device2"], "count": 2}</pre>
-            </div>
-        </div>
-        
-        <h2 id="stream">📺 Streaming</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/start_stream</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Start streaming between devices</p>
-                <pre>{
-  "source": "device1",
-  "target": "device2",
-  "quality": "high"
-}
-→ {"status": "streaming", "stream_id": "stream_..."}</pre>
-            </div>
-        </div>
-        
-        <h2 id="frames">📸 Frames</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/send_frame</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Send a video/audio frame</p>
-                <pre>{
-  "stream_id": "stream_...",
-  "from": "device1",
-  "target": "device2",
-  "frame": "base64encodeddata",
-  "type": "video"
-}</pre>
-            </div>
-        </div>
-        
-        <h2 id="wol">⚡ Wake-on-LAN</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/wol</span>
-            </div>
-            <div class="endpoint-body">
-                <p>Send Wake-on-LAN magic packet</p>
-                <pre>{
-  "mac": "AA:BB:CC:DD:EE:FF",
-  "peer_id": "my-device"
-}
-→ {"status": "wol_sent", "success": true}</pre>
-            </div>
-        </div>
-    </div>
+<nav><div class="nav-container"><a href="/" class="logo">Nexus Remote</a><div class="nav-links"><a href="/">Home</a><a href="/dashboard">Dashboard</a></div></div></nav>
+
+<div class="container">
+<h1>Nexus Remote Documentation</h1>
+<p style="color:#888;margin-bottom:24px">Everything you need to know about using Nexus Remote</p>
+
+<h2>Getting Started</h2>
+<div class="card">
+<div class="step"><div class="num">1</div><div class="text"><b>Create Account</b> - Go to <a href="/register">Register</a> and sign up with email or Google/GitHub</div></div>
+<div class="step"><div class="num">2</div><div class="text"><b>Download App</b> - Get the desktop app from <a href="/download">Downloads</a></div></div>
+<div class="step"><div class="num">3</div><div class="text"><b>Run App</b> - Execute <code>python nexus_final_app.py</code> or compile C++ version</div></div>
+<div class="step"><div class="num">4</div><div class="text"><b>Connect</b> - Enter Peer ID of another device and click Connect</div></div>
+</div>
+
+<h2>Website Features</h2>
+<div class="card">
+<h3>Web Viewer</h3>
+<p>View remote screen directly in browser at <a href="/viewer">/viewer</a>. Enter Peer ID and click Connect.</p>
+
+<h3>Gamepad</h3>
+<p>Customizable mobile gamepad at <a href="/gamepad">/gamepad</a>. Click Edit button to drag/resize buttons.</p>
+
+<h3>Speed Test</h3>
+<p>Test connection quality at <a href="/speedtest">/speedtest</a> before streaming.</p>
+
+<h3>File Transfer</h3>
+<p>Drag & drop files at <a href="/files">/files</a> to send between devices.</p>
+
+<h3>Remote Support</h3>
+<p>Generate one-time access links at <a href="/support">/support</a>.</p>
+
+<h3>Dashboard</h3>
+<p>Manage devices, view stats at <a href="/dashboard">/dashboard</a> (requires login).</p>
+</div>
+
+<h2>Desktop App Features</h2>
+<div class="card">
+<h3>Home Tab</h3>
+<p>Device info, Quick Connect, Share Screen, Start/Stop Capture</p>
+<h3>Devices Tab</h3>
+<p>Add devices with secret code, Wake-on-LAN, Sleep, View screen</p>
+<h3>Chat Tab</h3>
+<p>Real-time chat with connected device</p>
+<h3>Files Tab</h3>
+<p>Send and receive files</p>
+<h3>Security Tab</h3>
+<p>E2E encryption, MFA, Whitelist, Auto-lock settings</p>
+<h3>Stats Tab</h3>
+<p>Frames sent, data transferred, FPS</p>
+</div>
+
+<h2>Wake-on-LAN</h2>
+<div class="card">
+<p>To wake a device remotely:</p>
+<div class="step"><div class="num">1</div><div class="text">Add device in <b>Devices</b> tab with its MAC address</div></div>
+<div class="step"><div class="num">2</div><div class="text">Click <b>Wake</b> button - Magic Packet sent to wake the PC</div></div>
+<div class="step"><div class="num">3</div><div class="text">Wait 30-60 seconds for PC to boot</div></div>
+<div class="step"><div class="num">4</div><div class="text">Click <b>Connect</b> to start streaming</div></div>
+</div>
+</div>
 </body>
 </html>

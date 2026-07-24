@@ -1,43 +1,54 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Nexus P2P</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2P Connection - Nexus Remote</title>
 <style>
-body{font-family:Arial;background:#0a0a1a;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-.card{background:#151530;padding:30px;border-radius:16px;text-align:center;max-width:500px}
-h1{color:#6366f1}input{width:100%;padding:10px;margin:8px 0;border-radius:8px;background:#0a0a1a;color:#fff;border:1px solid #2a2a4a}
-.btn{padding:12px 24px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin:4px;color:#fff}
-.btn-primary{background:#6366f1}.btn-success{background:#22c55e}.btn-danger{background:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#151530;border-radius:20px;padding:40px;width:450px;text-align:center;border:1px solid #2a2a4a}
+h1{font-size:28px;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+p{color:#888;font-size:13px;margin-bottom:20px}
+input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px;margin:6px 0}
+.btn{padding:14px 28px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;color:#fff;width:100%;margin:6px 0}
+.btn-connect{background:#22c55e}.btn-call{background:#6366f1}
 video{width:100%;max-width:400px;border-radius:8px;margin:10px 0;background:#000}
-#status{color:#888;font-size:12px;margin:8px 0}
+#status{color:#888;font-size:11px;margin:8px 0}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>Nexus P2P</h1>
-<p style="color:#888">Direct device-to-device connection via WebRTC</p>
-<input id="peerId" placeholder="Remote Peer ID">
-<div>
-<button class="btn btn-primary" onclick="createOffer()">Call</button>
-<button class="btn btn-success" onclick="answerCall()">Answer</button>
-<button class="btn btn-danger" onclick="hangUp()">Hang Up</button>
-</div>
-<p id="status">Ready</p>
-<video id="localVideo" autoplay muted></video>
-<video id="remoteVideo" autoplay></video>
-</div>
-<script>
-var pc=null,localStream=null;
-var cfg={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+<h1>P2P Connection</h1>
+<p>Direct device-to-device via WebRTC</p>
 
-async function start(){try{localStream=await navigator.mediaDevices.getDisplayMedia({video:true});document.getElementById('localVideo').srcObject=localStream;document.getElementById('status').textContent='Screen shared'}catch(e){document.getElementById('status').textContent='Screen access denied'}}
-function createPC(){pc=new RTCPeerConnection(cfg);pc.onicecandidate=e=>{if(e.candidate)send({type:'candidate',candidate:e.candidate})};pc.ontrack=e=>{document.getElementById('remoteVideo').srcObject=e.streams[0]};localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));return pc}
-async function createOffer(){await start();createPC();var offer=await pc.createOffer();await pc.setLocalDescription(offer);send({type:'offer',sdp:pc.localDescription});document.getElementById('status').textContent='Offer sent'}
-async function answerCall(){await start();createPC();pc.ondatachannel=e=>{e.channel.onmessage=ev=>{var data=JSON.parse(ev.data);if(data.type==='offer'){pc.setRemoteDescription(data.sdp).then(()=>pc.createAnswer()).then(a=>pc.setLocalDescription(a)).then(()=>send({type:'answer',sdp:pc.localDescription}))}else if(data.type==='candidate'){pc.addIceCandidate(data.candidate)}}};document.getElementById('status').textContent='Waiting for call...'}
-function send(data){console.log('Send:',data)}
-function hangUp(){if(pc)pc.close();if(localStream)localStream.getTracks().forEach(t=>t.stop());pc=null;document.getElementById('status').textContent='Disconnected'}
-start();
+<input type="text" id="peerId" placeholder="Remote Peer ID">
+
+<button class="btn btn-call" onclick="startCall()">Start Call</button>
+<button class="btn btn-connect" onclick="shareScreen()">Share My Screen</button>
+
+<p id="status">Ready for P2P connection</p>
+<video id="localVideo" autoplay muted style="display:none"></video>
+<video id="remoteVideo" autoplay style="display:none"></video>
+</div>
+
+<script>
+async function shareScreen(){
+try{
+const stream=await navigator.mediaDevices.getDisplayMedia({video:true});
+document.getElementById('localVideo').srcObject=stream;
+document.getElementById('localVideo').style.display='block';
+document.getElementById('status').textContent='Screen shared! Waiting for peer...';
+}catch(e){
+document.getElementById('status').textContent='Screen share denied or not supported';
+}
+}
+
+function startCall(){
+const peer=document.getElementById('peerId').value.trim();
+if(!peer)return alert('Enter Peer ID');
+document.getElementById('status').textContent='Calling '+peer+'... (P2P requires both devices to use this page)';
+}
 </script>
 </body>
 </html>

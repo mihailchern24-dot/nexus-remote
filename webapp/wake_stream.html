@@ -1,161 +1,59 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Remote - Wake & Stream</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
-        nav { background: #0d0d24; border-bottom: 1px solid #1a1a3e; padding: 16px 0; }
-        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
-        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
-        h1 { font-size: 32px; margin-bottom: 8px; }
-        p { color: #888; margin-bottom: 32px; }
-        .card { background: #151530; border: 1px solid #2a2a4a; border-radius: 16px; padding: 30px; margin-bottom: 20px; }
-        .card h2 { font-size: 20px; color: #6366f1; margin-bottom: 20px; }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; margin-bottom: 6px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .input-group input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid #2a2a4a; background: #0a0a1a; color: #fff; font-size: 14px; }
-        .input-group input:focus { outline: none; border-color: #6366f1; }
-        .btn { padding: 14px 28px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-primary:hover { background: #5558e6; transform: translateY(-2px); }
-        .btn-wol { background: #f59e0b; color: #fff; }
-        .btn-wol:hover { background: #d97706; }
-        .btn-stream { background: #22c55e; color: #fff; }
-        .btn-stream:hover { background: #16a34a; }
-        .btn-stop { background: #ef4444; color: #fff; }
-        .device-list { display: flex; flex-direction: column; gap: 10px; }
-        .device-item { background: #0a0a1a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .device-item:hover { border-color: #6366f1; }
-        .device-info h3 { font-size: 15px; margin-bottom: 4px; }
-        .device-info p { color: #777; font-size: 12px; margin: 0; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-        .status-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-        .status-dot.offline { background: #ef4444; }
-        .status-dot.sleeping { background: #f59e0b; }
-        .msg { padding: 12px; border-radius: 10px; margin-top: 12px; display: none; font-size: 13px; }
-        .msg.success { background: rgba(34,197,94,0.1); color: #22c55e; }
-        .msg.error { background: rgba(239,68,68,0.1); color: #ef4444; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wake-on-LAN - Nexus Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#151530;border-radius:20px;padding:40px;width:450px;text-align:center;border:1px solid #2a2a4a}
+h1{font-size:28px;background:linear-gradient(135deg,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+p{color:#888;font-size:13px;margin-bottom:20px}
+input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a2a4a;background:#0a0a1a;color:#fff;font-size:14px;margin:6px 0;text-align:center}
+.btn{padding:14px 28px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;color:#fff;width:100%;margin:6px 0}
+.btn-wake{background:#f59e0b}.btn-connect{background:#22c55e}
+.msg{padding:10px;border-radius:8px;margin-top:10px;font-size:12px;display:none}
+.msg.success{background:rgba(34,197,94,0.1);color:#22c55e}
+.msg.info{background:rgba(99,102,241,0.1);color:#818cf8}
+</style>
 </head>
 <body>
-    <nav>
-        <div class="nav-container">
-            <a href="/" class="logo">Nexus Remote</a>
-            <a href="/dashboard" style="color:#888;text-decoration:none">Dashboard</a>
-        </div>
-    </nav>
-    
-    <div class="container">
-        <h1>Wake & Stream</h1>
-        <p>Wake up your devices remotely and start streaming instantly</p>
-        
-        <!-- My Devices -->
-        <div class="card">
-            <h2>My Devices</h2>
-            <div class="device-list" id="deviceList">
-                <div class="device-item">
-                    <div class="device-info">
-                        <h3><span class="status-dot offline"></span> Office PC</h3>
-                        <p>Windows 11 · MAC: AA:BB:CC:DD:EE:FF</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-wol" onclick="wakeDevice('AA:BB:CC:DD:EE:FF')" style="padding:8px 16px;font-size:12px">Wake Up</button>
-                        <button class="btn btn-stream" onclick="streamDevice('office-pc')" style="padding:8px 16px;font-size:12px" disabled>Stream</button>
-                    </div>
-                </div>
-                <div class="device-item">
-                    <div class="device-info">
-                        <h3><span class="status-dot sleeping"></span> Gaming PC</h3>
-                        <p>Windows 11 · MAC: 11:22:33:44:55:66</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-wol" onclick="wakeDevice('11:22:33:44:55:66')" style="padding:8px 16px;font-size:12px">Wake Up</button>
-                        <button class="btn btn-stream" onclick="streamDevice('gaming-pc')" style="padding:8px 16px;font-size:12px" disabled>Stream</button>
-                    </div>
-                </div>
-                <div class="device-item">
-                    <div class="device-info">
-                        <h3><span class="status-dot online"></span> Laptop</h3>
-                        <p>Windows 11 · Online</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-stop" onclick="streamDevice('laptop')" style="padding:8px 16px;font-size:12px">Stream Now</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Manual WOL -->
-        <div class="card">
-            <h2>Manual Wake-on-LAN</h2>
-            <div class="input-group">
-                <label>MAC Address</label>
-                <input type="text" id="macInput" placeholder="AA:BB:CC:DD:EE:FF">
-            </div>
-            <div class="input-group">
-                <label>Device Name (optional)</label>
-                <input type="text" id="deviceName" placeholder="My PC">
-            </div>
-            <div class="msg success" id="successMsg"></div>
-            <div class="msg error" id="errorMsg"></div>
-            <button class="btn btn-wol" onclick="sendWOL()">Send WOL Packet</button>
-        </div>
-    </div>
+<div class="card">
+<h1>Wake-on-LAN</h1>
+<p>Turn on your PC remotely by sending a Magic Packet</p>
 
-    <script>
-        async function wakeDevice(mac) {
-            try {
-                const resp = await fetch('/wol', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({mac: mac})
-                });
-                const data = await resp.json();
-                showMsg('WOL packet sent! Device should wake up in 30-60 seconds.', 'success');
-                
-                // Poll for device online
-                let attempts = 0;
-                const interval = setInterval(async () => {
-                    attempts++;
-                    const peerResp = await fetch('/peers');
-                    const peers = await peerResp.json();
-                    
-                    if (peers.peers && peers.peers.length > 0) {
-                        clearInterval(interval);
-                        showMsg('Device is now online! You can start streaming.', 'success');
-                        location.reload();
-                    }
-                    
-                    if (attempts > 30) {
-                        clearInterval(interval);
-                        showMsg('Device did not wake up. Check MAC address and try again.', 'error');
-                    }
-                }, 2000);
-            } catch(e) {
-                showMsg('Failed to send WOL packet', 'error');
-            }
-        }
-        
-        async function sendWOL() {
-            const mac = document.getElementById('macInput').value.trim();
-            if (!mac) return showMsg('Enter MAC address', 'error');
-            await wakeDevice(mac);
-        }
-        
-        function streamDevice(peerId) {
-            window.location.href = '/viewer?peer=' + peerId;
-        }
-        
-        function showMsg(msg, type) {
-            const el = document.getElementById(type + 'Msg');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-    </script>
+<input type="text" id="mac" placeholder="MAC Address (AA:BB:CC:DD:EE:FF)" value="AA:BB:CC:DD:EE:FF">
+<input type="text" id="peer" placeholder="Peer ID (optional)">
+
+<button class="btn btn-wake" onclick="wake()">Send WOL Packet</button>
+<button class="btn btn-connect" onclick="connect()">Connect After Wake</button>
+
+<div class="msg success" id="success"></div>
+<div class="msg info" id="info"></div>
+
+<p style="color:#666;font-size:10px;margin-top:16px">
+Device must be on the same network or have WOL enabled in BIOS<br>
+After wake, wait 30-60 seconds before connecting
+</p>
+</div>
+
+<script>
+async function wake(){
+const mac=document.getElementById('mac').value.trim();
+if(!mac)return alert('Enter MAC address');
+try{
+await fetch('/wol',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac})});
+document.getElementById('success').textContent='WOL packet sent! Device should wake up in 30-60 seconds.';
+document.getElementById('success').style.display='block';
+}catch(e){alert('Failed to send WOL')}
+}
+
+function connect(){
+const peer=document.getElementById('peer').value.trim();
+if(peer)window.location.href='/viewer?peer='+peer;
+else window.location.href='/viewer';
+}
+</script>
 </body>
 </html>

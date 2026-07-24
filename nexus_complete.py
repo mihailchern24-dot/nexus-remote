@@ -355,8 +355,8 @@ class NexusComplete:
     
     def update_stats(self):
         self.stats_text.delete('1.0','end')
-        self.stats_text.insert('end', 'ã======================================¬\n')
-        self.stats_text.insert('end', '¦     ?? NEXUS REMOTE STATS            ¦\n')
+        self.stats_text.insert('end', '?======================================?\n')
+        self.stats_text.insert('end', '?     ?? NEXUS REMOTE STATS            ?\n')
         self.stats_text.insert('end', 'L======================================-\n\n')
         self.stats_text.insert('end', f'Device: {DEVICE_ID}\n')
         self.stats_text.insert('end', f'MAC: {LOCAL_MAC}\n')
@@ -373,4 +373,5 @@ class NexusComplete:
 
 if __name__ == '__main__':
     app = NexusComplete(); app.run()
+
 
