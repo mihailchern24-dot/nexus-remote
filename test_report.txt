@@ -1,20 +1,20 @@
 Nexus Remote Test Report
-Date: 2026-07-24 12:42:37.519132
-Passed: 69/87 (79.3%)
+Date: 2026-07-24 12:47:50.701884
+Passed: 78/87 (89.7%)
 
   PASS  Server Health Check
   FAIL  Server Status API
-  FAIL  Device Registration - 'status'
-  FAIL  Android Registration - 'status'
-  FAIL  Get Peers List
+  PASS  Device Registration
+  PASS  Android Registration
+  PASS  Get Peers List
   PASS  Auth Register
   PASS  Auth Login
   PASS  QR Code Feature
-  FAIL  Start Stream
-  FAIL  Send Video Frame
-  FAIL  Send Audio Frame
-  FAIL  Receive Frame
-  FAIL  Stop Stream
+  PASS  Start Stream
+  PASS  Send Video Frame
+  PASS  Send Audio Frame
+  PASS  Receive Frame
+  PASS  Stop Stream
   PASS  Multi-Monitor Module
   PASS  Session Recording
   PASS  Chat Feature
@@ -47,7 +47,7 @@ Passed: 69/87 (79.3%)
   PASS  Hardware Acceleration
   PASS  P2P WebRTC Page
   PASS  Cloud Relay Server
-  FAIL  WOL Endpoint
+  PASS  WOL Endpoint
   PASS  Sleep Command
   PASS  Battery Status
   PASS  Dark Theme

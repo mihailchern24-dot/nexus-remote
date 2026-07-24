@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # test_all_56_features.py - FULL TEST of ALL 56 Nexus Remote Features
 import requests, json, time, base64, hashlib, secrets, os, sys, platform
@@ -199,3 +199,6 @@ with open("test_report.txt","w") as f:
         f.write(r + "\n")
 
 print("\nReport saved: test_report.txt")
+
+
+
